@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/merchant_theme.dart';
 import '../../orders/presentation/merchant_shell.dart';
 import '../../menu/data/menu_api.dart';
+import '../../../core/api/api_client.dart';
+import 'package:image_picker/image_picker.dart';
 
 const _menuCategories = [
   'Main Course',
@@ -102,8 +104,66 @@ class _MenuScreenState extends State<MenuScreen> {
                     itemBuilder: (ctx, i) {
                       final it = _items[i];
                       return ListTile(
-                        title: Text(it.name, style: const TextStyle(color: MerchantTheme.textPrimary, fontWeight: FontWeight.w700)),
-                        subtitle: Text('${it.category ?? 'General'} • ₹${it.price.toStringAsFixed(2)}', style: const TextStyle(color: MerchantTheme.tabInactive)),
+                        leading: it.imageUrl != null && it.imageUrl!.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  it.imageUrl!,
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : const CircleAvatar(
+                                radius: 24,
+                                backgroundColor: MerchantTheme.bgCardInner,
+                                child: Icon(Icons.fastfood, color: MerchantTheme.tabInactive),
+                              ),
+                        title: Row(
+                          children: [
+                            if (it.isVeg)
+                              const Icon(Icons.circle, color: Colors.green, size: 10)
+                            else
+                              const Icon(Icons.circle, color: Colors.red, size: 10),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                it.name,
+                                style: const TextStyle(
+                                  color: MerchantTheme.textPrimary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            if (it.isBestseller)
+                              const Padding(
+                                padding: EdgeInsets.only(left: 4),
+                                child: Icon(Icons.local_fire_department, color: Colors.orange, size: 16),
+                              ),
+                          ],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${it.category ?? 'General'} • ₹${it.price.toStringAsFixed(2)}',
+                              style: const TextStyle(color: MerchantTheme.tabInactive),
+                            ),
+                            if ((it.description ?? '').isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  it.description!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: MerchantTheme.tabInactive,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -147,6 +207,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
   late final TextEditingController _imageUrl;
   bool _isVeg = false;
   bool _isBestseller = false;
+  bool _uploading = false;
 
   @override
   void initState() {
@@ -201,9 +262,46 @@ class _EditItemDialogState extends State<_EditItemDialog> {
               maxLines: 2,
             ),
             const SizedBox(height: 8),
-            TextField(
-              decoration: const InputDecoration(labelText: 'Image URL'),
-              controller: _imageUrl,
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: const InputDecoration(labelText: 'Image URL'),
+                    controller: _imageUrl,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _uploading
+                      ? null
+                      : () async {
+                          final picker = ImagePicker();
+                          final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+                          if (picked == null) return;
+                          setState(() => _uploading = true);
+                          try {
+                            final res = await ApiClient().uploadImage(picked.path, folder: 'partner-menu');
+                            final url = (res['data']?['url'] as String?) ?? '';
+                            if (url.isNotEmpty) {
+                              _imageUrl.text = url;
+                              setState(() {});
+                            }
+                          } catch (_) {} finally {
+                            if (mounted) {
+                              setState(() => _uploading = false);
+                            }
+                          }
+                        },
+                  icon: _uploading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.file_upload_outlined),
+                  tooltip: 'Upload',
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Row(
