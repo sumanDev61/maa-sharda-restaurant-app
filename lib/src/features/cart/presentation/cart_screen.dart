@@ -1,13 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../address/shared/address_providers.dart';
+import '../../address/domain/address.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final addresses = ref.watch(addressesProvider);
+    final selectedId = ref.watch(selectedAddressIdProvider);
+    Address? selected;
+    if (addresses is AsyncData<List<Address>> && selectedId is AsyncData<String?>) {
+      final list = addresses.value;
+      final id = selectedId.value;
+      if (id != null) {
+        final found = list.where((e) => e.id == id);
+        if (found.isNotEmpty) {
+          selected = found.first;
+        } else if (list.isNotEmpty) {
+          selected = list.first;
+        }
+      } else if (list.any((e) => e.isDefault)) {
+        selected = list.firstWhere((e) => e.isDefault);
+      } else if (list.isNotEmpty) {
+        selected = list.first;
+      }
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Cart')),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Card(
+              child: ListTile(
+                leading: const Icon(Icons.location_on_outlined),
+                title: Text(selected != null ? '${selected.type} • ${selected.city}' : 'Select delivery address'),
+                subtitle: Text(selected != null ? '${selected.line1}, ${selected.city} ${selected.pincode}' : 'Choose where to deliver'),
+                trailing: TextButton(onPressed: () => context.push('/address/select'), child: const Text('Change')),
+              ),
+            ),
+          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),

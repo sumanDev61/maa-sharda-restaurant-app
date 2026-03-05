@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -20,6 +21,8 @@ class ProfileScreen extends StatelessWidget {
             Card(
               child: Column(
                 children: [
+                ListTile(leading: const Icon(Icons.location_on_outlined), title: const Text('Addresses'), onTap: () => context.push('/address/select')),
+                const Divider(height: 1),
                   ListTile(leading: const Icon(Icons.settings_outlined), title: const Text('Settings'), onTap: () {}),
                   const Divider(height: 1),
                   ListTile(leading: const Icon(Icons.help_outline), title: const Text('Help & Support'), onTap: () {}),

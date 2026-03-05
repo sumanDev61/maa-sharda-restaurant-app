@@ -1,88 +1,99 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/cart/presentation/cart_screen.dart';
-import '../../features/menu/presentation/menu_screen.dart';
 import '../../features/orders/presentation/orders_screen.dart';
-import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/orders/presentation/merchant_shell.dart';
+import '../../features/auth/login_screen.dart';
+import '../../features/menu/presentation/menu_screen.dart';
+import '../../features/store/presentation/store_screen.dart';
 
-GoRouter createRouter() {
+class _HistoryScreen extends StatelessWidget {
+  const _HistoryScreen();
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        'Order History',
+        style: TextStyle(color: Colors.white54, fontSize: 18),
+      ),
+    );
+  }
+}
+
+final _screens = <Widget>[
+  const OrdersScreen(),
+  const _HistoryScreen(),
+  const MenuScreen(),
+  const StoreScreen(),
+];
+
+GoRouter createRouter({required bool isLoggedIn}) {
   return GoRouter(
+    initialLocation: isLoggedIn ? '/' : '/login',
     routes: [
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        pageBuilder: (context, state) => const NoTransitionPage(child: PartnerLoginScreen()),
+      ),
       ShellRoute(
         builder: (context, state, child) {
-          return Scaffold(
-            body: child,
-            bottomNavigationBar: _NavBar(),
+          final location = state.uri.toString();
+          int index = 0;
+          if (location.startsWith('/history')) {
+            index = 1;
+          } else if (location.startsWith('/menu')) {
+            index = 2;
+          } else if (location.startsWith('/store')) {
+            index = 3;
+          }
+          return MerchantShell(
+            currentIndex: index,
+            onDestinationSelected: (i) {
+              switch (i) {
+                case 0:
+                  GoRouter.of(context).go('/');
+                  break;
+                case 1:
+                  GoRouter.of(context).go('/history');
+                  break;
+                case 2:
+                  GoRouter.of(context).go('/menu');
+                  break;
+                case 3:
+                  GoRouter.of(context).go('/store');
+                  break;
+              }
+            },
+            child: child,
           );
         },
         routes: [
           GoRoute(
             path: '/',
-            name: 'menu',
-            pageBuilder: (context, state) => const NoTransitionPage(child: MenuScreen()),
-          ),
-          GoRoute(
-            path: '/orders',
             name: 'orders',
-            pageBuilder: (context, state) => const NoTransitionPage(child: OrdersScreen()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: OrdersScreen()),
           ),
           GoRoute(
-            path: '/cart',
-            name: 'cart',
-            pageBuilder: (context, state) => const NoTransitionPage(child: CartScreen()),
+            path: '/history',
+            name: 'history',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: _HistoryScreen()),
           ),
           GoRoute(
-            path: '/profile',
-            name: 'profile',
-            pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen()),
+            path: '/menu',
+            name: 'menu',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: MenuScreen()),
+          ),
+          GoRoute(
+            path: '/store',
+            name: 'store',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: StoreScreen()),
           ),
         ],
       ),
     ],
   );
-}
-
-class _NavBar extends StatefulWidget {
-  @override
-  State<_NavBar> createState() => _NavBarState();
-}
-
-class _NavBarState extends State<_NavBar> {
-  int current = 0;
-  @override
-  Widget build(BuildContext context) {
-    final location = GoRouter.of(context).routeInformationProvider.value.uri.toString();
-    if (location.startsWith('/orders')) {
-      current = 1;
-    } else if (location.startsWith('/cart')) {
-      current = 2;
-    } else if (location.startsWith('/profile')) {
-      current = 3;
-    } else {
-      current = 0;
-    }
-    return NavigationBar(
-      selectedIndex: current,
-      onDestinationSelected: (i) {
-        if (i == 0) {
-          context.go('/');
-        }
-        if (i == 1) {
-          context.go('/orders');
-        }
-        if (i == 2) {
-          context.go('/cart');
-        }
-        if (i == 3) {
-          context.go('/profile');
-        }
-      },
-      destinations: const [
-        NavigationDestination(icon: Icon(Icons.restaurant_menu_outlined), selectedIcon: Icon(Icons.restaurant_menu), label: 'Menu'),
-        NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: 'Orders'),
-        NavigationDestination(icon: Icon(Icons.shopping_bag_outlined), selectedIcon: Icon(Icons.shopping_bag), label: 'Cart'),
-        NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
-      ],
-    );
-  }
 }
