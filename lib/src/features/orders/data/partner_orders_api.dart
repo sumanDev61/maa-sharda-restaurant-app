@@ -30,7 +30,8 @@ class PartnerOrdersApi {
   }
 
   MerchantOrder _mapOrder(dynamic o) {
-    final status = (o['status']?.toString() ?? '').toUpperCase();
+    final statusRaw = (o['status']?.toString() ?? '');
+    final status = statusRaw.toUpperCase().replaceAll(' ', '_');
     final driver = (o['driver'] as Map<String, dynamic>?) ?? {};
     final items = (o['items'] as List<dynamic>? ?? []).map((it) {
       final name = it['name']?.toString() ?? 'Item';
@@ -47,22 +48,29 @@ class PartnerOrdersApi {
       amount = sum;
     }
     final w = max(5, (o['prep_time_minutes'] as num?)?.toInt() ?? 15);
-    final mStatus = switch (status) {
-      'PENDING_MERCHANT_CONFIRMATION' => OrderStatus.incoming,
-      'ACCEPTED_BY_MERCHANT' => OrderStatus.preparing,
-      'PREPARING' => OrderStatus.preparing,
-      'READY_FOR_PICKUP' => OrderStatus.ready,
-      'DRIVER_ASSIGNED' => OrderStatus.outForDelivery,
-      'DRIVER_ARRIVED_AT_MERCHANT' => OrderStatus.outForDelivery,
-      'PICKED_UP' => OrderStatus.outForDelivery,
-      'EN_ROUTE_TO_CUSTOMER' => OrderStatus.outForDelivery,
-      'ARRIVED_AT_CUSTOMER' => OrderStatus.outForDelivery,
-      'OUT_FOR_DELIVERY' => OrderStatus.outForDelivery,
-      'DELIVERED' => OrderStatus.delivered,
-      'REJECTED_BY_MERCHANT' => OrderStatus.cancelled,
-      'CANCELLED' => OrderStatus.cancelled,
-      _ => OrderStatus.incoming,
-    };
+    OrderStatus mapStatus(String v) {
+      if (v.contains('CANCEL') || v.contains('REJECT')) return OrderStatus.cancelled;
+      if (v.contains('DELIVERED') || v.contains('COMPLETED')) return OrderStatus.delivered;
+      if (
+          v == 'DRIVER_ASSIGNED' ||
+          v == 'DRIVER_ARRIVED_AT_MERCHANT' ||
+          v == 'PICKED_UP' ||
+          v == 'EN_ROUTE_TO_CUSTOMER' ||
+          v == 'ARRIVED_AT_CUSTOMER' ||
+          v == 'OUT_FOR_DELIVERY' ||
+          v.contains('OUT_FOR_DELIVERY') ||
+          v.contains('OUT_FOR')
+      ) return OrderStatus.outForDelivery;
+      if (v == 'READY_FOR_PICKUP' || v == 'READY' || v.contains('READY')) return OrderStatus.ready;
+      if (v == 'ACCEPTED_BY_MERCHANT' || v == 'PREPARING' || v.contains('PREPARING') || v.contains('ACCEPTED')) {
+        return OrderStatus.preparing;
+      }
+      if (v == 'PENDING_MERCHANT_CONFIRMATION' || v == 'PLACED' || v.contains('PENDING')) {
+        return OrderStatus.incoming;
+      }
+      return OrderStatus.incoming;
+    }
+    final mStatus = mapStatus(status);
     return MerchantOrder(
       orderId: o['id']?.toString() ?? '',
       customerName: 'Customer',

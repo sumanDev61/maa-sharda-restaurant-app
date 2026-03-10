@@ -71,10 +71,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _ProfileTile(label: 'Store Status', value: _profile['status']?.toString() ?? 'Inactive'),
                   _ProfileTile(label: 'Owner Name', value: _profile['owner_name']?.toString() ?? ''),
                   _ProfileTile(label: 'Owner Email', value: _profile['owner_email']?.toString() ?? ''),
+                  ..._buildDocumentTiles(_profile['documents']),
                 ],
               ],
             ),
           );
+  }
+
+  List<Widget> _buildDocumentTiles(dynamic docsRaw) {
+    if (docsRaw is! Map) return const [];
+    final docs = docsRaw.cast<String, dynamic>();
+    final entries = <MapEntry<String, String>>[
+      MapEntry('FSSAI License', docs['fssai']?.toString() ?? ''),
+      MapEntry('GST Number', docs['gst']?.toString() ?? ''),
+      MapEntry('PAN', docs['pan']?.toString() ?? ''),
+      MapEntry('Aadhar', docs['aadhar']?.toString() ?? ''),
+      MapEntry('Other License', docs['license']?.toString() ?? ''),
+    ].where((e) => e.value.isNotEmpty).toList();
+    if (entries.isEmpty) return const [];
+    return entries.map((e) => _ProfileTile(label: e.key, value: e.value)).toList();
   }
 }
 

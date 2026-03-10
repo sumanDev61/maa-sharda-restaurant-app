@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
@@ -224,8 +225,28 @@ class _PartnerRegisterScreenState extends State<PartnerRegisterScreen> {
   final _ownerName = TextEditingController();
   final _ownerEmail = TextEditingController();
   final _cuisine = TextEditingController();
+  final _fssai = TextEditingController();
+  final _gst = TextEditingController();
+  final _pan = TextEditingController();
+  final _aadhar = TextEditingController();
+  final _license = TextEditingController();
   bool _loading = false;
   String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _address.dispose();
+    _ownerName.dispose();
+    _ownerEmail.dispose();
+    _cuisine.dispose();
+    _fssai.dispose();
+    _gst.dispose();
+    _pan.dispose();
+    _aadhar.dispose();
+    _license.dispose();
+    super.dispose();
+  }
 
   Future<void> _register() async {
     final phone = widget.args?.phone ?? '';
@@ -233,19 +254,34 @@ class _PartnerRegisterScreenState extends State<PartnerRegisterScreen> {
       setState(() => _error = 'Name and address required');
       return;
     }
+    final docs = <String, String>{};
+    final fssai = _fssai.text.trim();
+    final gst = _gst.text.trim();
+    final pan = _pan.text.trim();
+    final aadhar = _aadhar.text.trim();
+    final license = _license.text.trim();
+    if (fssai.isNotEmpty) docs['fssai'] = fssai;
+    if (gst.isNotEmpty) docs['gst'] = gst;
+    if (pan.isNotEmpty) docs['pan'] = pan;
+    if (aadhar.isNotEmpty) docs['aadhar'] = aadhar;
+    if (license.isNotEmpty) docs['license'] = license;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final res = await ApiClient().post('/v1/partner/auth/register', body: {
+      final body = {
         'phone': phone,
         'name': _name.text.trim(),
         'address': _address.text.trim(),
         'owner_name': _ownerName.text.trim(),
         'owner_email': _ownerEmail.text.trim(),
         'cuisines': _cuisine.text.trim().isNotEmpty ? [_cuisine.text.trim()] : [],
-      });
+      };
+      if (docs.isNotEmpty) {
+        body['documents'] = docs;
+      }
+      final res = await ApiClient().post('/v1/partner/auth/register', body: body);
       final data = (res as Map<String, dynamic>)['data'] as Map<String, dynamic>;
       final rid = data['restaurant_id']?.toString() ?? '';
       final otp = data['otp']?.toString();
@@ -301,6 +337,33 @@ class _PartnerRegisterScreenState extends State<PartnerRegisterScreen> {
               decoration: const InputDecoration(labelText: 'Owner Email'),
             ),
             const SizedBox(height: 12),
+            const Text('Documents (optional)', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _fssai,
+              decoration: const InputDecoration(labelText: 'FSSAI License'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _gst,
+              decoration: const InputDecoration(labelText: 'GST Number'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _pan,
+              decoration: const InputDecoration(labelText: 'PAN'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _aadhar,
+              decoration: const InputDecoration(labelText: 'Aadhar'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _license,
+              decoration: const InputDecoration(labelText: 'Other License'),
+            ),
+            const SizedBox(height: 12),
             if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 20),
             SizedBox(
@@ -328,9 +391,25 @@ class PartnerReviewScreen extends StatefulWidget {
 class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
   String _status = PartnerSession().approvalStatus ?? 'inReview';
   bool _loading = false;
+  bool _checking = false;
+  Timer? _poller;
 
-  Future<void> _checkStatus() async {
-    setState(() => _loading = true);
+  @override
+  void initState() {
+    super.initState();
+    _poller = Timer.periodic(const Duration(seconds: 15), (_) => _checkStatus(showLoading: false));
+  }
+
+  @override
+  void dispose() {
+    _poller?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _checkStatus({bool showLoading = true}) async {
+    if (_checking) return;
+    _checking = true;
+    if (showLoading) setState(() => _loading = true);
     try {
       final res = await ApiClient().get('/v1/partner/profile') as Map<String, dynamic>;
       final data = res['data'] as Map<String, dynamic>? ?? {};
@@ -348,7 +427,8 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
       }
     } catch (_) {
     } finally {
-      if (mounted) setState(() => _loading = false);
+      _checking = false;
+      if (mounted && showLoading) setState(() => _loading = false);
     }
   }
 
