@@ -20,7 +20,11 @@ class App extends StatelessWidget {
         }
         final isLoggedIn = (PartnerSession().token ?? '').isNotEmpty &&
             (PartnerSession().restaurantId ?? '').isNotEmpty;
-        final router = createRouter(isLoggedIn: isLoggedIn);
+        final approval = PartnerSession().approvalStatus;
+        final router = createRouter(
+          isLoggedIn: isLoggedIn,
+          needsReview: isLoggedIn && approval != null && approval != 'approved',
+        );
         return MaterialApp.router(
           title: 'Maa Sharda Go - Merchant Portal',
           debugShowCheckedModeBanner: false,

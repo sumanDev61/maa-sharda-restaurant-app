@@ -1,4 +1,4 @@
-enum OrderStatus { incoming, preparing, ready }
+enum OrderStatus { incoming, preparing, ready, outForDelivery, delivered, cancelled }
 
 enum DeliveryType { priorityDelivery, selfPickup, delivery }
 
@@ -21,7 +21,12 @@ class MerchantOrder {
   final List<OrderItem> items;
   final String waitTime;
   final OrderStatus status;
-   final String pickupOtp;
+  final String pickupOtp;
+  final String statusRaw;
+  final String driverName;
+  final String driverPhone;
+  final String driverStatus;
+  final String refundStatus;
 
   const MerchantOrder({
     required this.orderId,
@@ -30,7 +35,12 @@ class MerchantOrder {
     required this.items,
     required this.waitTime,
     required this.status,
+    required this.statusRaw,
     this.pickupOtp = '',
+    this.driverName = '',
+    this.driverPhone = '',
+    this.driverStatus = '',
+    this.refundStatus = '',
   });
 
   String get deliveryTypeLabel {
@@ -61,6 +71,7 @@ final List<MerchantOrder> dummyOrders = [
     ],
     waitTime: '08:45',
     status: OrderStatus.incoming,
+    statusRaw: 'PENDING_MERCHANT_CONFIRMATION',
   ),
   const MerchantOrder(
     orderId: 'MS-9025',
@@ -72,6 +83,7 @@ final List<MerchantOrder> dummyOrders = [
     ],
     waitTime: '03:12',
     status: OrderStatus.incoming,
+    statusRaw: 'PENDING_MERCHANT_CONFIRMATION',
   ),
   const MerchantOrder(
     orderId: 'MS-9018',
@@ -84,6 +96,7 @@ final List<MerchantOrder> dummyOrders = [
     ],
     waitTime: '12:30',
     status: OrderStatus.incoming,
+    statusRaw: 'PENDING_MERCHANT_CONFIRMATION',
   ),
   const MerchantOrder(
     orderId: 'MS-9015',
@@ -95,6 +108,7 @@ final List<MerchantOrder> dummyOrders = [
     ],
     waitTime: '05:20',
     status: OrderStatus.preparing,
+    statusRaw: 'ACCEPTED_BY_MERCHANT',
   ),
   const MerchantOrder(
     orderId: 'MS-9013',
@@ -106,6 +120,7 @@ final List<MerchantOrder> dummyOrders = [
     ],
     waitTime: '18:40',
     status: OrderStatus.preparing,
+    statusRaw: 'PREPARING',
   ),
   const MerchantOrder(
     orderId: 'MS-9012',
@@ -118,6 +133,7 @@ final List<MerchantOrder> dummyOrders = [
     ],
     waitTime: '15:55',
     status: OrderStatus.preparing,
+    statusRaw: 'PREPARING',
   ),
   const MerchantOrder(
     orderId: 'MS-9010',
@@ -129,6 +145,7 @@ final List<MerchantOrder> dummyOrders = [
     ],
     waitTime: '22:00',
     status: OrderStatus.preparing,
+    statusRaw: 'PREPARING',
   ),
   const MerchantOrder(
     orderId: 'MS-9008',
@@ -140,6 +157,7 @@ final List<MerchantOrder> dummyOrders = [
     ],
     waitTime: '25:10',
     status: OrderStatus.preparing,
+    statusRaw: 'PREPARING',
   ),
   const MerchantOrder(
     orderId: 'MS-9005',
@@ -151,6 +169,7 @@ final List<MerchantOrder> dummyOrders = [
     ],
     waitTime: '30:00',
     status: OrderStatus.ready,
+    statusRaw: 'READY_FOR_PICKUP',
   ),
   const MerchantOrder(
     orderId: 'MS-9003',
@@ -161,5 +180,6 @@ final List<MerchantOrder> dummyOrders = [
     ],
     waitTime: '35:15',
     status: OrderStatus.ready,
+    statusRaw: 'READY_FOR_PICKUP',
   ),
 ];

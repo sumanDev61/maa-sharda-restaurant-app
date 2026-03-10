@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/merchant_theme.dart';
+import 'package:go_router/go_router.dart';
 
 class MerchantShell extends StatelessWidget {
   final Widget child;
@@ -17,13 +18,13 @@ class MerchantShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MerchantTheme.bgDark,
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(context),
       body: child,
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: MerchantTheme.bgDark,
       elevation: 0,
@@ -72,7 +73,7 @@ class MerchantShell extends StatelessWidget {
                   color: MerchantTheme.accentGreen,
                   size: 26,
                 ),
-                onPressed: () {},
+                onPressed: () => GoRouter.of(context).push('/notifications'),
               ),
               Positioned(
                 right: 8,
@@ -133,6 +134,12 @@ class MerchantShell extends StatelessWidget {
                 label: 'STORE',
                 isSelected: currentIndex == 3,
                 onTap: () => onDestinationSelected(3),
+              ),
+              _NavItem(
+                icon: Icons.person,
+                label: 'PROFILE',
+                isSelected: currentIndex == 4,
+                onTap: () => onDestinationSelected(4),
               ),
             ],
           ),

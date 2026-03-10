@@ -39,7 +39,8 @@ class OrderCard extends StatelessWidget {
             // ── Customer info ──
             _buildCustomerInfo(),
             const SizedBox(height: 8),
-            if (order.pickupOtp.isNotEmpty) ...[
+            if ((order.status == OrderStatus.ready || order.status == OrderStatus.outForDelivery) &&
+                order.pickupOtp.isNotEmpty) ...[
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
@@ -73,6 +74,51 @@ class OrderCard extends StatelessWidget {
               const SizedBox(height: 12),
             ] else
               const SizedBox(height: 14),
+            if (order.driverName.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: MerchantTheme.bgCardInner,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: MerchantTheme.dividerColor, width: 0.5),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Driver Assigned',
+                      style: TextStyle(
+                        color: MerchantTheme.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          order.driverName,
+                          style: const TextStyle(
+                            color: MerchantTheme.textPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        if (order.driverPhone.isNotEmpty)
+                          Text(
+                            order.driverPhone,
+                            style: const TextStyle(
+                              color: MerchantTheme.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             // ── Items list ──
             _buildItemsList(),
             const SizedBox(height: 16),
@@ -133,6 +179,12 @@ class OrderCard extends StatelessWidget {
         return 'PREPARING';
       case OrderStatus.ready:
         return 'READY FOR PICKUP';
+      case OrderStatus.outForDelivery:
+        return 'OUT FOR DELIVERY';
+      case OrderStatus.delivered:
+        return 'DELIVERED';
+      case OrderStatus.cancelled:
+        return 'CANCELLED';
     }
   }
 
@@ -306,11 +358,61 @@ class OrderCard extends StatelessWidget {
         ],
       );
     }
+    if (order.status == OrderStatus.ready) {
+      final canHandover = order.driverName.isNotEmpty;
+      return Row(
+        children: [
+          Expanded(
+            child: ElevatedButton(
+              onPressed: canHandover ? onReady : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: MerchantTheme.accentGreen,
+                foregroundColor: const Color(0xFF003300),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 0,
+              ),
+              child: Text(
+                canHandover ? 'HANDOVER TO DRIVER' : 'WAITING FOR DRIVER',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    if (order.status == OrderStatus.outForDelivery) {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: null,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: MerchantTheme.textSecondary,
+                side: const BorderSide(color: MerchantTheme.dividerColor, width: 1.2),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: Text(
+                _driverStatusLabel(order.statusRaw),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
     return Row(
       children: [
         Expanded(
           child: ElevatedButton(
-            onPressed: onReady,
+            onPressed: order.status == OrderStatus.delivered || order.status == OrderStatus.cancelled ? null : onReady,
             style: ElevatedButton.styleFrom(
               backgroundColor: MerchantTheme.accentGreen,
               foregroundColor: const Color(0xFF003300),
@@ -320,9 +422,13 @@ class OrderCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 14),
               elevation: 0,
             ),
-            child: const Text(
-              'HANDOVER',
-              style: TextStyle(
+            child: Text(
+              order.status == OrderStatus.delivered
+                  ? 'DELIVERED'
+                  : order.status == OrderStatus.cancelled
+                      ? 'CANCELLED'
+                      : 'HANDOVER',
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.5,
@@ -332,5 +438,16 @@ class OrderCard extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _driverStatusLabel(String raw) {
+    final s = raw.toUpperCase();
+    if (s == 'DRIVER_ASSIGNED') return 'DRIVER ASSIGNED';
+    if (s == 'DRIVER_ARRIVED_AT_MERCHANT') return 'DRIVER ARRIVED';
+    if (s == 'PICKED_UP') return 'ORDER PICKED UP';
+    if (s == 'EN_ROUTE_TO_CUSTOMER') return 'OUT FOR DELIVERY';
+    if (s == 'ARRIVED_AT_CUSTOMER') return 'ARRIVED AT CUSTOMER';
+    if (s == 'DELIVERED') return 'DELIVERED';
+    return 'IN TRANSIT';
   }
 }

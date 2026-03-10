@@ -28,7 +28,7 @@ class ApiClient {
     if (res.statusCode >= 200 && res.statusCode < 300) {
       return jsonDecode(res.body);
     }
-    throw Exception('GET $path failed ${res.statusCode}');
+    throw ApiException(res.statusCode, _errorMessage(res));
   }
 
   Future<dynamic> put(String path, {Map<String, dynamic>? body}) async {
@@ -37,7 +37,7 @@ class ApiClient {
     if (res.statusCode >= 200 && res.statusCode < 300) {
       return jsonDecode(res.body.isEmpty ? '{}' : res.body);
     }
-    throw Exception('PUT $path failed ${res.statusCode}');
+    throw ApiException(res.statusCode, _errorMessage(res));
   }
 
   Future<dynamic> post(String path, {Map<String, dynamic>? body}) async {
@@ -46,7 +46,7 @@ class ApiClient {
     if (res.statusCode >= 200 && res.statusCode < 300) {
       return jsonDecode(res.body.isEmpty ? '{}' : res.body);
     }
-    throw Exception('POST $path failed ${res.statusCode}');
+    throw ApiException(res.statusCode, _errorMessage(res));
   }
 
   Future<Map<String, dynamic>> uploadImage(String filePath, {String folder = 'partner-menu'}) async {
@@ -63,6 +63,24 @@ class ApiClient {
     if (streamed.statusCode >= 200 && streamed.statusCode < 300) {
       return jsonDecode(body) as Map<String, dynamic>;
     }
-    throw Exception('Upload failed ${streamed.statusCode}');
+    throw ApiException(streamed.statusCode, 'Upload failed');
   }
+
+  String _errorMessage(http.Response res) {
+    try {
+      final decoded = jsonDecode(res.body);
+      if (decoded is Map && decoded['message'] != null) {
+        return decoded['message'].toString();
+      }
+    } catch (_) {}
+    return 'Request failed (${res.statusCode})';
+  }
+}
+
+class ApiException implements Exception {
+  final int statusCode;
+  final String message;
+  const ApiException(this.statusCode, this.message);
+  @override
+  String toString() => message;
 }

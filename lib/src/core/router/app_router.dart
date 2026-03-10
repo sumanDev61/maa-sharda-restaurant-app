@@ -5,35 +5,48 @@ import '../../features/orders/presentation/merchant_shell.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/menu/presentation/menu_screen.dart';
 import '../../features/store/presentation/store_screen.dart';
-
-class _HistoryScreen extends StatelessWidget {
-  const _HistoryScreen();
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Order History',
-        style: TextStyle(color: Colors.white54, fontSize: 18),
-      ),
-    );
-  }
-}
+import '../../features/orders/presentation/history_screen.dart';
+import '../../features/notifications/notifications_screen.dart';
+import '../../features/profile/profile_screen.dart';
 
 final _screens = <Widget>[
   const OrdersScreen(),
-  const _HistoryScreen(),
+  const HistoryScreen(),
   const MenuScreen(),
   const StoreScreen(),
+  const ProfileScreen(),
 ];
 
-GoRouter createRouter({required bool isLoggedIn}) {
+GoRouter createRouter({required bool isLoggedIn, bool needsReview = false}) {
   return GoRouter(
-    initialLocation: isLoggedIn ? '/' : '/login',
+    initialLocation: isLoggedIn ? (needsReview ? '/review' : '/') : '/login',
     routes: [
       GoRoute(
         path: '/login',
         name: 'login',
         pageBuilder: (context, state) => const NoTransitionPage(child: PartnerLoginScreen()),
+      ),
+      GoRoute(
+        path: '/otp',
+        name: 'otp',
+        pageBuilder: (context, state) =>
+            NoTransitionPage(child: PartnerOtpScreen(args: state.extra as OtpArgs?)),
+      ),
+      GoRoute(
+        path: '/register',
+        name: 'register',
+        pageBuilder: (context, state) =>
+            NoTransitionPage(child: PartnerRegisterScreen(args: state.extra as RegisterArgs?)),
+      ),
+      GoRoute(
+        path: '/review',
+        name: 'review',
+        pageBuilder: (context, state) => const NoTransitionPage(child: PartnerReviewScreen()),
+      ),
+      GoRoute(
+        path: '/notifications',
+        name: 'notifications',
+        pageBuilder: (context, state) => const NoTransitionPage(child: NotificationsScreen()),
       ),
       ShellRoute(
         builder: (context, state, child) {
@@ -45,6 +58,8 @@ GoRouter createRouter({required bool isLoggedIn}) {
             index = 2;
           } else if (location.startsWith('/store')) {
             index = 3;
+          } else if (location.startsWith('/profile')) {
+            index = 4;
           }
           return MerchantShell(
             currentIndex: index,
@@ -62,6 +77,9 @@ GoRouter createRouter({required bool isLoggedIn}) {
                 case 3:
                   GoRouter.of(context).go('/store');
                   break;
+                case 4:
+                  GoRouter.of(context).go('/profile');
+                  break;
               }
             },
             child: child,
@@ -78,7 +96,7 @@ GoRouter createRouter({required bool isLoggedIn}) {
             path: '/history',
             name: 'history',
             pageBuilder: (context, state) =>
-                const NoTransitionPage(child: _HistoryScreen()),
+                const NoTransitionPage(child: HistoryScreen()),
           ),
           GoRoute(
             path: '/menu',
@@ -91,6 +109,12 @@ GoRouter createRouter({required bool isLoggedIn}) {
             name: 'store',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: StoreScreen()),
+          ),
+          GoRoute(
+            path: '/profile',
+            name: 'profile',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ProfileScreen()),
           ),
         ],
       ),

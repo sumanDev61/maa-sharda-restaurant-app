@@ -3,14 +3,14 @@ import 'dart:async';
 import '../domain/order_model.dart';
 import '../data/partner_orders_api.dart';
 import '../../../core/auth/partner_session.dart';
-import '../../auth/login_screen.dart';
-import '../../../core/api/api_client.dart' show ApiClient;
 import '../../../core/config/env.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' show utf8;
 import 'package:flutter/services.dart' show SystemSound, SystemSoundType;
 import '../../../core/theme/merchant_theme.dart';
 import 'widgets/order_card.dart';
+import '../../../core/notifications/notification_service.dart';
+import 'package:go_router/go_router.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -26,11 +26,13 @@ class _OrdersScreenState extends State<OrdersScreen>
   List<MerchantOrder> _orders = [];
   bool _loading = false;
   bool _sessionReady = false;
+  Timer? _ringTimer;
+  Set<String> _knownIncoming = {};
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _bootstrap();
     _poller = Timer.periodic(const Duration(seconds: 8), (_) => _poll());
   }
@@ -39,8 +41,11 @@ class _OrdersScreenState extends State<OrdersScreen>
     await PartnerSession().load();
     if (!mounted) return;
     if ((PartnerSession().restaurantId ?? '').isEmpty) {
-      final ok = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const PartnerLoginScreen()));
-      if (ok != true && !mounted) return;
+      if (mounted) {
+        // ignore: use_build_context_synchronously
+        GoRouter.of(context).go('/login');
+      }
+      return;
     }
     setState(() => _sessionReady = true);
     await _load();
@@ -60,7 +65,6 @@ class _OrdersScreenState extends State<OrdersScreen>
     _sseSub = res.stream.transform(utf8.decoder).listen((chunk) {
       if (chunk.contains('data:')) {
         _load();
-        SystemSound.play(SystemSoundType.alert);
       }
     });
   }
@@ -70,6 +74,7 @@ class _OrdersScreenState extends State<OrdersScreen>
     _tabController.dispose();
     _poller.cancel();
     _sseSub?.cancel();
+    _stopRinging();
     super.dispose();
   }
 
@@ -82,8 +87,10 @@ class _OrdersScreenState extends State<OrdersScreen>
     try {
       final list = await _api.fetch();
       setState(() => _orders = list);
+      _handleIncomingAlert(list.where((o) => o.status == OrderStatus.incoming).toList());
     } catch (_) {
       setState(() => _orders = []);
+      _handleIncomingAlert(const []);
     } finally {
       setState(() => _loading = false);
     }
@@ -101,6 +108,7 @@ class _OrdersScreenState extends State<OrdersScreen>
     final newOrders = _getOrdersByStatus(OrderStatus.incoming);
     final preparingOrders = _getOrdersByStatus(OrderStatus.preparing);
     final readyOrders = _getOrdersByStatus(OrderStatus.ready);
+    final outForDeliveryOrders = _getOrdersByStatus(OrderStatus.outForDelivery);
 
     return Column(
       children: [
@@ -113,6 +121,7 @@ class _OrdersScreenState extends State<OrdersScreen>
               Tab(text: 'NEW (${newOrders.length})'),
               Tab(text: 'PREPARING (${preparingOrders.length})'),
               Tab(text: 'READY (${readyOrders.length})'),
+              Tab(text: 'OUT FOR DELIVERY (${outForDeliveryOrders.length})'),
             ],
           ),
         ),
@@ -148,6 +157,14 @@ class _OrdersScreenState extends State<OrdersScreen>
                 onAccept: _onAccept,
                 onReject: _onReject,
                 onReady: _onReady,
+              ),
+              _OrderList(
+                orders: outForDeliveryOrders,
+                showingCount: outForDeliveryOrders.length,
+                totalCount: outForDeliveryOrders.length,
+                onAccept: null,
+                onReject: null,
+                onReady: null,
               ),
             ],
                   ),
@@ -200,6 +217,35 @@ class _OrdersScreenState extends State<OrdersScreen>
     }
     await _load();
   }
+
+  void _handleIncomingAlert(List<MerchantOrder> incoming) {
+    final ids = incoming.map((o) => o.orderId).toSet();
+    final newIds = ids.difference(_knownIncoming);
+    _knownIncoming = ids;
+    if (newIds.isNotEmpty) {
+      NotificationService().showOrderAlert(
+        title: 'New order received',
+        body: 'You have ${incoming.length} new order${incoming.length == 1 ? '' : 's'}',
+      );
+    }
+    if (ids.isNotEmpty) {
+      _startRinging();
+    } else {
+      _stopRinging();
+    }
+  }
+
+  void _startRinging() {
+    if (_ringTimer != null) return;
+    _ringTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      SystemSound.play(SystemSoundType.alert);
+    });
+  }
+
+  void _stopRinging() {
+    _ringTimer?.cancel();
+    _ringTimer = null;
+  }
 }
 
 class _OrderList extends StatelessWidget {
@@ -238,7 +284,7 @@ class _OrderList extends StatelessWidget {
           const SizedBox(height: 12),
           Center(
             child: Text(
-              'Showing $showingCount of $totalCount new orders',
+              'Showing $showingCount of $totalCount orders',
               style: const TextStyle(
                 color: MerchantTheme.textSecondary,
                 fontSize: 13,
