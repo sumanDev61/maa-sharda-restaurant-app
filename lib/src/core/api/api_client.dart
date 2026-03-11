@@ -66,6 +66,26 @@ class ApiClient {
     throw ApiException(streamed.statusCode, 'Upload failed');
   }
 
+  Future<Map<String, dynamic>> uploadRegistrationImage(String filePath, {String folder = 'partner-registration'}) async {
+    final uri = Uri.parse('$_baseUrl/v1/partner/upload-registration');
+    final req = http.MultipartRequest('POST', uri);
+    req.headers['Accept'] = 'application/json';
+    req.fields['folder'] = folder;
+    req.files.add(await http.MultipartFile.fromPath('image', filePath));
+    final streamed = await req.send();
+    final body = await streamed.stream.bytesToString();
+    if (streamed.statusCode >= 200 && streamed.statusCode < 300) {
+      return jsonDecode(body) as Map<String, dynamic>;
+    }
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded['message'] != null) {
+        throw ApiException(streamed.statusCode, decoded['message'].toString());
+      }
+    } catch (_) {}
+    throw ApiException(streamed.statusCode, 'Upload failed');
+  }
+
   String _errorMessage(http.Response res) {
     try {
       final decoded = jsonDecode(res.body);
