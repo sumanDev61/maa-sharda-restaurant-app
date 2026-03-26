@@ -9,6 +9,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/api/api_client.dart';
 import '../../core/auth/partner_session.dart';
+import '../../core/push/push_service.dart';
 import 'auth_models.dart';
 
 const _kPrimary = Color(0xFF135BEC);
@@ -662,29 +663,8 @@ class _PartnerRegisterDocumentsScreenState extends State<PartnerRegisterDocument
       final res = await ApiClient().post('/v1/partner/auth/register', body: body);
       final data = (res as Map<String, dynamic>)['data'] as Map<String, dynamic>;
       final rid = data['restaurant_id']?.toString() ?? '';
-      final otp = data['otp']?.toString();
       if (!mounted) return;
-      if (otp != null && otp.trim().isNotEmpty) {
-        final verifyRes = await ApiClient().post('/v1/partner/auth/verify-otp', body: {
-          'restaurant_id': rid,
-          'otp': otp,
-        });
-        final vData = (verifyRes as Map<String, dynamic>)['data'] as Map<String, dynamic>;
-        final token = vData['token']?.toString() ?? '';
-        final rest = vData['restaurant'] as Map<String, dynamic>? ?? {};
-        final approval = rest['approval_status']?.toString() ?? 'inReview';
-        final name = rest['name']?.toString() ?? widget.draft.restaurantName;
-        await PartnerSession().save(
-          token: token,
-          restaurantId: rid,
-          approvalStatus: approval,
-          restaurantName: name,
-        );
-        if (!mounted) return;
-        GoRouter.of(context).go('/review');
-      } else {
-        GoRouter.of(context).go('/otp', extra: OtpArgs(restaurantId: rid, phone: widget.draft.phone, otp: otp));
-      }
+      GoRouter.of(context).go('/otp', extra: OtpArgs(restaurantId: rid, phone: widget.draft.phone, otp: null));
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);

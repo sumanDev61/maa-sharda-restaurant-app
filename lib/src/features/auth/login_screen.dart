@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/auth/partner_session.dart';
 import '../../core/theme/merchant_theme.dart';
+import '../../core/push/push_service.dart';
 import 'auth_models.dart';
 
 class PartnerLoginScreen extends StatefulWidget {
@@ -33,9 +34,8 @@ class _PartnerLoginScreenState extends State<PartnerLoginScreen> {
       });
       final data = (res as Map<String, dynamic>)['data'] as Map<String, dynamic>;
       final rid = data['restaurant_id']?.toString() ?? '';
-      final otp = data['otp']?.toString();
       if (!mounted) return;
-      GoRouter.of(context).go('/otp', extra: OtpArgs(restaurantId: rid, phone: phone, otp: otp));
+      GoRouter.of(context).go('/otp', extra: OtpArgs(restaurantId: rid, phone: phone, otp: null));
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 404) {
@@ -100,17 +100,13 @@ class _PartnerOtpScreenState extends State<PartnerOtpScreen> {
   final _otpController = TextEditingController();
   bool _loading = false;
   String? _error;
-  String? _shownOtp;
 
   @override
   void initState() {
     super.initState();
     final otp = widget.args?.otp?.trim();
     if (otp != null && otp.isNotEmpty) {
-      _shownOtp = otp;
-      if (otp.length == 6) {
-        _otpController.text = otp;
-      }
+      _otpController.text = otp;
     }
   }
 
@@ -143,6 +139,7 @@ class _PartnerOtpScreenState extends State<PartnerOtpScreen> {
         approvalStatus: approval,
         restaurantName: name,
       );
+      await PushService.trySyncToken();
       if (!mounted) return;
       if (approval != 'approved') {
         GoRouter.of(context).go('/review');
@@ -171,10 +168,6 @@ class _PartnerOtpScreenState extends State<PartnerOtpScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('OTP sent to ${args?.phone ?? ''}', style: const TextStyle(color: MerchantTheme.textSecondary)),
-            if (_shownOtp != null) ...[
-              const SizedBox(height: 8),
-              Text('Debug OTP: $_shownOtp', style: const TextStyle(color: MerchantTheme.accentGreen)),
-            ],
             const SizedBox(height: 16),
             TextField(
               controller: _otpController,
