@@ -182,13 +182,26 @@ class _OrdersScreenState extends State<OrdersScreen>
         return AlertDialog(
           title: const Text('Set prep time (minutes)'),
           content: StatefulBuilder(
-            builder: (ctx, setS) => Slider(
-              min: 5,
-              max: 45,
-              divisions: 8,
-              value: val.toDouble(),
-              label: '$val',
-              onChanged: (d) => setS(() => val = d.round()),
+            builder: (ctx, setS) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [10, 15, 20, 25, 30, 35, 40, 45]
+                      .map(
+                        (m) => ChoiceChip(
+                          label: Text('$m min'),
+                          selected: val == m,
+                          onSelected: (_) => setS(() => val = m),
+                        ),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 12),
+                Text('Selected: $val min'),
+              ],
             ),
           ),
           actions: [

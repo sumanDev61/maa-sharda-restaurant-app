@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/auth/partner_session.dart';
+import '../../core/theme/merchant_theme.dart';
 
 const _kPrimary = Color(0xFF477EEB);
 const _kBgLight = Color(0xFFF6F6F8);
@@ -131,95 +132,146 @@ class _MerchantProfileAndSettings extends StatelessWidget {
     final id = profile['id']?.toString() ?? '';
 
     return Container(
-      color: _kBgLight,
+      color: MerchantTheme.bgDark,
       child: ListView(
-        padding: const EdgeInsets.only(bottom: 32),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          _HeaderBar(title: 'Business Profile'),
-          _ProfileHero(
-            name: name,
-            id: id,
-            imageUrl: imageUrl,
-          ),
-          _SectionTitle(title: 'Store Management'),
-          _Card(
-            children: [
-              _RowItem(
-                icon: Icons.schedule,
-                title: 'Store Timings',
-                subtitle: '09:00 AM - 10:00 PM',
-                actionLabel: 'Edit',
-                onTap: () {},
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 32,
+                    backgroundColor: MerchantTheme.bgCardInner,
+                    backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+                    child: imageUrl.isEmpty ? const Icon(Icons.store, color: MerchantTheme.tabInactive) : null,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(name, style: const TextStyle(color: MerchantTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 4),
+                        Text(phone.isEmpty ? 'No phone added' : phone, style: const TextStyle(color: MerchantTheme.tabInactive)),
+                        const SizedBox(height: 4),
+                        Text(address.isEmpty ? 'No address added' : address, style: const TextStyle(color: MerchantTheme.tabInactive, fontSize: 12)),
+                        const SizedBox(height: 8),
+                        Text('Partner ID: ${id.isEmpty ? '-' : id}', style: const TextStyle(color: MerchantTheme.tabInactive, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              _RowItem(
-                icon: Icons.call,
-                title: 'Contact Information',
-                subtitle: phone.isEmpty ? 'Add contact' : phone,
-                onTap: () {},
-              ),
-            ],
+            ),
           ),
           const SizedBox(height: 16),
-          _SectionTitle(title: 'Administration'),
-          _Card(
-            children: [
-              _RowItem(
-                icon: Icons.badge,
-                title: 'Manager Profile',
-                onTap: () => GoRouter.of(context).go('/profile/manager'),
-              ),
-              _RowItem(
-                icon: Icons.description,
-                title: 'Commission & Agreements',
-                onTap: () => GoRouter.of(context).go('/profile/commission'),
-              ),
-              _RowItem(
-                icon: Icons.language,
-                title: 'App Language',
-                subtitle: 'English (US)',
-                trailingText: 'English (US)',
-                onTap: () {},
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _LogoutButton(
-              onPressed: () async {
-                await PartnerSession().clear();
-                if (context.mounted) GoRouter.of(context).go('/login');
-              },
+          const Text('Account', style: TextStyle(color: MerchantTheme.textPrimary, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          Card(
+            child: Column(
+              children: [
+                _DarkRowItem(
+                  icon: Icons.account_balance_outlined,
+                  title: 'My Bank',
+                  subtitle: 'Payout account details',
+                  onTap: () {},
+                ),
+                const Divider(height: 1, color: MerchantTheme.dividerColor),
+                _DarkRowItem(
+                  icon: Icons.edit_outlined,
+                  title: 'Edit Profile',
+                  subtitle: ownerName.isEmpty ? 'Update owner details' : ownerName,
+                  onTap: () => GoRouter.of(context).go('/profile/manager'),
+                ),
+                const Divider(height: 1, color: MerchantTheme.dividerColor),
+                _DarkRowItem(
+                  icon: Icons.logout,
+                  title: 'Logout',
+                  titleColor: Colors.redAccent,
+                  onTap: () async {
+                    await PartnerSession().clear();
+                    if (context.mounted) GoRouter.of(context).go('/login');
+                  },
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              'App Version 2.4.1 (Build 890)',
-              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              address.isEmpty ? '' : address,
-              style: const TextStyle(color: _kMuted, fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              ownerName.isEmpty ? '' : '$ownerName${ownerEmail.isNotEmpty ? ' · $ownerEmail' : ''}',
-              style: const TextStyle(color: _kMuted, fontSize: 12),
-              textAlign: TextAlign.center,
+          const SizedBox(height: 16),
+          Card(
+            child: Column(
+              children: [
+                _DarkRowItem(
+                  icon: Icons.support_agent_outlined,
+                  title: 'Help & Support',
+                  subtitle: 'Contact team',
+                  onTap: () {},
+                ),
+                const Divider(height: 1, color: MerchantTheme.dividerColor),
+                _DarkRowItem(
+                  icon: Icons.info_outline,
+                  title: 'About',
+                  subtitle: ownerEmail.isEmpty ? 'Merchant portal' : ownerEmail,
+                  onTap: () {},
+                ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DarkRowItem extends StatelessWidget {
+  const _DarkRowItem({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.onTap,
+    this.titleColor,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback? onTap;
+  final Color? titleColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: MerchantTheme.bgCardInner,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: MerchantTheme.accentGreen),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(color: titleColor ?? MerchantTheme.textPrimary, fontWeight: FontWeight.w700)),
+                  if (subtitle != null && subtitle!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(subtitle!, style: const TextStyle(color: MerchantTheme.tabInactive, fontSize: 12)),
+                  ],
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: MerchantTheme.tabInactive),
+          ],
+        ),
       ),
     );
   }

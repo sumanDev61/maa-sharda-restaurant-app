@@ -6,6 +6,7 @@ class PartnerMenuItem {
   final String name;
   final String? category;
   final double price;
+  final int prepTimeMinutes;
   final bool isVeg;
   final bool isBestseller;
   final String status;
@@ -18,6 +19,7 @@ class PartnerMenuItem {
     required this.price,
     required this.status,
     this.category,
+    this.prepTimeMinutes = 15,
     this.isVeg = false,
     this.isBestseller = false,
     this.description,
@@ -29,6 +31,7 @@ class PartnerMenuItem {
     String? name,
     String? category,
     double? price,
+    int? prepTimeMinutes,
     bool? isVeg,
     bool? isBestseller,
     String? status,
@@ -40,6 +43,7 @@ class PartnerMenuItem {
       name: name ?? this.name,
       category: category ?? this.category,
       price: price ?? this.price,
+      prepTimeMinutes: prepTimeMinutes ?? this.prepTimeMinutes,
       isVeg: isVeg ?? this.isVeg,
       isBestseller: isBestseller ?? this.isBestseller,
       status: status ?? this.status,
@@ -55,6 +59,7 @@ class PartnerMenuItem {
       category: j['category']?.toString(),
       price: (j['price'] as num?)?.toDouble() ?? 0,
       status: j['status']?.toString() ?? 'Available',
+      prepTimeMinutes: (j['prep_time_minutes'] as num?)?.toInt() ?? 15,
       isVeg: (j['is_veg'] as bool?) ?? false,
       isBestseller: (j['is_bestseller'] as bool?) ?? false,
       description: j['description']?.toString(),
@@ -69,6 +74,7 @@ class PartnerMenuItem {
       'category': category,
       'price': price,
       'status': status,
+      'prep_time_minutes': prepTimeMinutes,
       'is_veg': isVeg,
       'is_bestseller': isBestseller,
       'description': description,

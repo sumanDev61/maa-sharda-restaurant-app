@@ -130,8 +130,8 @@ class MerchantShell extends StatelessWidget {
                 onTap: () => onDestinationSelected(2),
               ),
               _NavItem(
-                icon: Icons.store,
-                label: 'STORE',
+                icon: Icons.restaurant,
+                label: 'RESTAURANT',
                 isSelected: currentIndex == 3,
                 onTap: () => onDestinationSelected(3),
               ),

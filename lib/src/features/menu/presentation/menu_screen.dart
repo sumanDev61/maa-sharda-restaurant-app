@@ -146,7 +146,7 @@ class _MenuScreenState extends State<MenuScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${it.category ?? 'General'} • ₹${it.price.toStringAsFixed(2)}',
+                              '${it.category ?? 'General'} • ₹${it.price.toStringAsFixed(2)} • ${it.prepTimeMinutes} min',
                               style: const TextStyle(color: MerchantTheme.tabInactive),
                             ),
                             if ((it.description ?? '').isNotEmpty)
@@ -205,6 +205,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
   late final TextEditingController _category;
   late final TextEditingController _description;
   late final TextEditingController _imageUrl;
+  int _prepTime = 15;
   bool _isVeg = false;
   bool _isBestseller = false;
   bool _uploading = false;
@@ -219,6 +220,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
     _imageUrl = TextEditingController(text: widget.item?.imageUrl ?? '');
     _isVeg = widget.item?.isVeg ?? false;
     _isBestseller = widget.item?.isBestseller ?? false;
+    _prepTime = widget.item?.prepTimeMinutes ?? 15;
   }
 
   @override
@@ -254,6 +256,27 @@ class _EditItemDialogState extends State<_EditItemDialog> {
               decoration: const InputDecoration(labelText: 'Price (₹)'),
               keyboardType: TextInputType.number,
               controller: _price,
+            ),
+            const SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Preparation Time', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [10, 15, 20, 25, 30, 45, 60]
+                      .map(
+                        (m) => ChoiceChip(
+                          label: Text('$m min'),
+                          selected: _prepTime == m,
+                          onSelected: (_) => setState(() => _prepTime = m),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             TextField(
@@ -340,6 +363,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
               category: _category.text.trim().isEmpty ? null : _category.text.trim(),
               price: p,
               status: widget.item?.status ?? 'Available',
+              prepTimeMinutes: _prepTime,
               isVeg: _isVeg,
               isBestseller: _isBestseller,
               description: _description.text.trim().isEmpty ? null : _description.text.trim(),
