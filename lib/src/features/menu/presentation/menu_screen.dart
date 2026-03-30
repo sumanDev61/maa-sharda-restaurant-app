@@ -226,130 +226,133 @@ class _EditItemDialogState extends State<_EditItemDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      scrollable: true,
       title: Text(widget.item == null ? 'Add Menu Item' : 'Edit Menu Item'),
       content: SizedBox(
         width: 360,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              decoration: const InputDecoration(labelText: 'Name'),
-              controller: _name,
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: _category.text.isEmpty ? null : _category.text,
-              items: _menuCategories
-                  .map((c) => DropdownMenuItem<String>(
-                        value: c,
-                        child: Text(c),
-                      ))
-                  .toList(),
-              onChanged: (v) {
-                _category.text = v ?? '';
-                setState(() {});
-              },
-              decoration: const InputDecoration(labelText: 'Category'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              decoration: const InputDecoration(labelText: 'Price (₹)'),
-              keyboardType: TextInputType.number,
-              controller: _price,
-            ),
-            const SizedBox(height: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Preparation Time', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [10, 15, 20, 25, 30, 45, 60]
-                      .map(
-                        (m) => ChoiceChip(
-                          label: Text('$m min'),
-                          selected: _prepTime == m,
-                          onSelected: (_) => setState(() => _prepTime = m),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              decoration: const InputDecoration(labelText: 'Description'),
-              controller: _description,
-              maxLines: 2,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: const InputDecoration(labelText: 'Image URL'),
-                    controller: _imageUrl,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: _uploading
-                      ? null
-                      : () async {
-                          final picker = ImagePicker();
-                          final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-                          if (picked == null) return;
-                          setState(() => _uploading = true);
-                          try {
-                            final res = await ApiClient().uploadImage(picked.path, folder: 'partner-menu');
-                            final url = (res['data']?['url'] as String?) ?? '';
-                            if (url.isNotEmpty) {
-                              _imageUrl.text = url;
-                              setState(() {});
-                            }
-                          } catch (_) {} finally {
-                            if (mounted) {
-                              setState(() => _uploading = false);
-                            }
-                          }
-                        },
-                  icon: _uploading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: const InputDecoration(labelText: 'Name'),
+                controller: _name,
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _category.text.isEmpty ? null : _category.text,
+                items: _menuCategories
+                    .map((c) => DropdownMenuItem<String>(
+                          value: c,
+                          child: Text(c),
+                        ))
+                    .toList(),
+                onChanged: (v) {
+                  _category.text = v ?? '';
+                  setState(() {});
+                },
+                decoration: const InputDecoration(labelText: 'Category'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Price (₹)'),
+                keyboardType: TextInputType.number,
+                controller: _price,
+              ),
+              const SizedBox(height: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Preparation Time', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [10, 15, 20, 25, 30, 45, 60]
+                        .map(
+                          (m) => ChoiceChip(
+                            label: Text('$m min'),
+                            selected: _prepTime == m,
+                            onSelected: (_) => setState(() => _prepTime = m),
+                          ),
                         )
-                      : const Icon(Icons.file_upload_outlined),
-                  tooltip: 'Upload',
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: CheckboxListTile(
-                    value: _isVeg,
-                    onChanged: (v) => setState(() => _isVeg = v ?? false),
-                    title: const Text('Veg'),
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
+                        .toList(),
                   ),
-                ),
-                Expanded(
-                  child: CheckboxListTile(
-                    value: _isBestseller,
-                    onChanged: (v) => setState(() => _isBestseller = v ?? false),
-                    title: const Text('Bestseller'),
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
+                ],
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Description'),
+                controller: _description,
+                maxLines: 2,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: const InputDecoration(labelText: 'Image URL'),
+                      controller: _imageUrl,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: _uploading
+                        ? null
+                        : () async {
+                            final picker = ImagePicker();
+                            final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+                            if (picked == null) return;
+                            setState(() => _uploading = true);
+                            try {
+                              final res = await ApiClient().uploadImage(picked.path, folder: 'partner-menu');
+                              final url = (res['data']?['url'] as String?) ?? '';
+                              if (url.isNotEmpty) {
+                                _imageUrl.text = url;
+                                setState(() {});
+                              }
+                            } catch (_) {} finally {
+                              if (mounted) {
+                                setState(() => _uploading = false);
+                              }
+                            }
+                          },
+                    icon: _uploading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.file_upload_outlined),
+                    tooltip: 'Upload',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: CheckboxListTile(
+                      value: _isVeg,
+                      onChanged: (v) => setState(() => _isVeg = v ?? false),
+                      title: const Text('Veg'),
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                  ),
+                  Expanded(
+                    child: CheckboxListTile(
+                      value: _isBestseller,
+                      onChanged: (v) => setState(() => _isBestseller = v ?? false),
+                      title: const Text('Bestseller'),
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       actions: [

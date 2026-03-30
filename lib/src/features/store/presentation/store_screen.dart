@@ -56,6 +56,8 @@ class _StoreScreenState extends State<StoreScreen> {
   final _client = ApiClient();
   bool _loading = false;
   bool _isOpen = true;
+  static const int _deliveryMin = 10;
+  static const int _deliveryMax = 60;
   int _deliveryMinutes = 25;
   bool _pureVeg = false;
   String _logoUrl = '';
@@ -82,7 +84,8 @@ class _StoreScreenState extends State<StoreScreen> {
       final gallery = (data['gallery_image_urls'] as List?)?.whereType<String>().toList() ?? [];
       setState(() {
         _isOpen = (data['status']?.toString() ?? 'Active') == 'Active';
-        _deliveryMinutes = (data['delivery_minutes'] as num?)?.toInt() ?? 25;
+        final rawMinutes = (data['delivery_minutes'] as num?)?.toInt() ?? 25;
+        _deliveryMinutes = rawMinutes.clamp(_deliveryMin, _deliveryMax).toInt();
         _pureVeg = (data['is_pure_veg'] as bool?) ?? false;
         _logoUrl = data['image_url']?.toString() ?? '';
         _coverUrl = gallery.isNotEmpty ? gallery.first : '';
@@ -169,6 +172,7 @@ class _StoreScreenState extends State<StoreScreen> {
       final url = (res['data']?['url'] as String?) ?? '';
       if (url.isNotEmpty) {
         setState(() => _logoUrl = url);
+        await _syncBranding(logoUrl: url);
       }
     } catch (_) {} finally {
       if (mounted) {
@@ -190,6 +194,7 @@ class _StoreScreenState extends State<StoreScreen> {
       final url = (res['data']?['url'] as String?) ?? '';
       if (url.isNotEmpty) {
         setState(() => _coverUrl = url);
+        await _syncBranding(coverUrl: url);
       }
     } catch (_) {} finally {
       if (mounted) {
@@ -234,6 +239,16 @@ class _StoreScreenState extends State<StoreScreen> {
     }
   }
 
+  Future<void> _syncBranding({String? logoUrl, String? coverUrl}) async {
+    final body = <String, dynamic>{};
+    if (logoUrl != null) body['image_url'] = logoUrl;
+    if (coverUrl != null) body['cover_url'] = coverUrl;
+    if (body.isEmpty) return;
+    try {
+      await _client.put('/v1/partner/status', body: body);
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -256,8 +271,8 @@ class _StoreScreenState extends State<StoreScreen> {
                 const SizedBox(height: 8),
                 const Text('Delivery Time (minutes)', style: TextStyle(color: MerchantTheme.textPrimary)),
                 Slider(
-                  min: 10,
-                  max: 60,
+                  min: _deliveryMin.toDouble(),
+                  max: _deliveryMax.toDouble(),
                   divisions: 10,
                   value: _deliveryMinutes.toDouble(),
                   onChanged: _loading ? null : (v) => setState(() => _deliveryMinutes = v.round()),

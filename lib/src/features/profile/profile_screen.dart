@@ -4,12 +4,6 @@ import '../../core/api/api_client.dart';
 import '../../core/auth/partner_session.dart';
 import '../../core/theme/merchant_theme.dart';
 
-const _kPrimary = Color(0xFF477EEB);
-const _kBgLight = Color(0xFFF6F6F8);
-const _kText = Color(0xFF0F172A);
-const _kMuted = Color(0xFF64748B);
-const _kBorder = Color(0xFFE2E8F0);
-
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -73,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Center(
               child: Text(
                 'Profile not available',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 16),
+                style: TextStyle(color: MerchantTheme.tabInactive, fontSize: 16),
               ),
             ),
           ],
@@ -91,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Center(
               child: Text(
                 'Your profile will be available after approval.',
-                style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
+                style: TextStyle(color: MerchantTheme.tabInactive, fontSize: 16),
               ),
             ),
             const SizedBox(height: 16),
@@ -99,8 +93,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: OutlinedButton(
                 onPressed: () => GoRouter.of(context).go('/review'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: _kPrimary,
-                  side: const BorderSide(color: _kPrimary),
+                  foregroundColor: MerchantTheme.accentGreen,
+                  side: const BorderSide(color: MerchantTheme.accentGreen),
                 ),
                 child: const Text('Check Status'),
               ),
@@ -206,14 +200,14 @@ class _MerchantProfileAndSettings extends StatelessWidget {
                   icon: Icons.support_agent_outlined,
                   title: 'Help & Support',
                   subtitle: 'Contact team',
-                  onTap: () {},
+                  onTap: () => GoRouter.of(context).go('/profile/help'),
                 ),
                 const Divider(height: 1, color: MerchantTheme.dividerColor),
                 _DarkRowItem(
                   icon: Icons.info_outline,
                   title: 'About',
                   subtitle: ownerEmail.isEmpty ? 'Merchant portal' : ownerEmail,
-                  onTap: () {},
+                  onTap: () => GoRouter.of(context).go('/profile/about'),
                 ),
               ],
             ),
@@ -320,64 +314,67 @@ class _ManagerProfileScreenState extends State<ManagerProfileScreen> {
     final imageUrl = _profile['image_url']?.toString() ?? '';
 
     return Scaffold(
-      backgroundColor: _kBgLight,
+      backgroundColor: MerchantTheme.bgDark,
       body: SafeArea(
         child: ListView(
           children: [
             _HeaderBar(title: 'Manager Profile', showBack: true),
             const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              color: Colors.white,
-              child: Column(
-                children: [
-                  _Avatar(imageUrl: imageUrl, size: 120),
-                  const SizedBox(height: 12),
-                  Text(name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _kPrimary.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _Avatar(imageUrl: imageUrl, size: 104),
+                    const SizedBox(height: 12),
+                    Text(
+                      name,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: MerchantTheme.textPrimary),
                     ),
-                    child: const Text('General Manager', style: TextStyle(color: _kPrimary, fontWeight: FontWeight.w700, fontSize: 12)),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(restaurant, style: const TextStyle(color: Color(0xFF94A3B8))),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: MerchantTheme.dimGreen.withOpacity(0.4),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text('Owner', style: TextStyle(color: MerchantTheme.accentGreen, fontWeight: FontWeight.w700, fontSize: 12)),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      restaurant.isEmpty ? 'Restaurant' : restaurant,
+                      style: const TextStyle(color: MerchantTheme.tabInactive),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
                       children: [
                         Expanded(
-                          child: ElevatedButton.icon(
+                          child: FilledButton.icon(
                             onPressed: () {},
                             icon: const Icon(Icons.edit, size: 18),
                             label: const Text('Edit Profile'),
-                            style: ElevatedButton.styleFrom(backgroundColor: _kPrimary, foregroundColor: Colors.white),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: ElevatedButton.icon(
+                          child: OutlinedButton.icon(
                             onPressed: () {},
                             icon: const Icon(Icons.lock_reset, size: 18),
                             label: const Text('Password'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE2E8F0),
-                              foregroundColor: const Color(0xFF0F172A),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: MerchantTheme.textPrimary,
+                              side: const BorderSide(color: MerchantTheme.dividerColor),
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 12),
-            _SectionTitle(title: 'Contact Information'),
+            const _SectionTitle(title: 'Contact Information'),
             _Card(
               children: [
                 _RowItem(icon: Icons.call, title: 'Phone', subtitle: phone, onTap: () {}),
@@ -386,11 +383,11 @@ class _ManagerProfileScreenState extends State<ManagerProfileScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            _SectionTitle(title: 'Account Settings'),
+            const _SectionTitle(title: 'Account Settings'),
             _Card(
               children: [
-                _RowItem(icon: Icons.notifications, title: 'Notification Preferences', onTap: () {}),
-                _RowItem(icon: Icons.language, title: 'Language Selection', trailingText: 'English', onTap: () {}),
+                _RowItem(icon: Icons.notifications, title: 'Notification Preferences', subtitle: 'Push & SMS alerts', onTap: () {}),
+                _RowItem(icon: Icons.language, title: 'Language', trailingText: 'English', onTap: () {}),
                 _RowItem(
                   icon: Icons.logout,
                   title: 'Sign Out',
@@ -416,7 +413,7 @@ class CommissionAgreementsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBgLight,
+      backgroundColor: MerchantTheme.bgDark,
       body: SafeArea(
         child: ListView(
           children: [
@@ -426,23 +423,23 @@ class CommissionAgreementsScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: _kPrimary.withOpacity(0.12),
+                  color: MerchantTheme.bgCardInner,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _kPrimary.withOpacity(0.2)),
+                  border: Border.all(color: MerchantTheme.dividerColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
-                    Text('Current Tier', style: TextStyle(color: _kPrimary, fontWeight: FontWeight.w700, fontSize: 12, letterSpacing: 0.8)),
+                    Text('Current Tier', style: TextStyle(color: MerchantTheme.accentGreen, fontWeight: FontWeight.w700, fontSize: 12, letterSpacing: 0.8)),
                     SizedBox(height: 6),
-                    Text('10% Commission', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+                    Text('10% Commission', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: MerchantTheme.textPrimary)),
                     SizedBox(height: 8),
-                    Text('Your commission rate is based on the Premium Partner tier. Next review: Jan 15, 2024.', style: TextStyle(color: Color(0xFF64748B))),
+                    Text('Your commission rate is based on the Premium Partner tier. Next review scheduled soon.', style: TextStyle(color: MerchantTheme.tabInactive)),
                   ],
                 ),
               ),
             ),
-            _SectionTitle(title: 'Active Agreements'),
+            const _SectionTitle(title: 'Active Agreements'),
             _Card(
               children: [
                 _RowItem(
@@ -470,27 +467,27 @@ class CommissionAgreementsScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: MerchantTheme.bgCardInner,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: MerchantTheme.dividerColor),
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.gavel, color: Color(0xFF94A3B8), size: 36),
+                    const Icon(Icons.gavel, color: MerchantTheme.tabInactive, size: 36),
                     const SizedBox(height: 8),
-                    const Text('Legal Contract Details', style: TextStyle(fontWeight: FontWeight.w700)),
+                    const Text('Legal Contract Details', style: TextStyle(fontWeight: FontWeight.w700, color: MerchantTheme.textPrimary)),
                     const SizedBox(height: 6),
                     const Text(
                       'View the complete terms and conditions of your partnership with Maa Sharda Go.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Color(0xFF64748B)),
+                      style: TextStyle(color: MerchantTheme.tabInactive),
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
                       onPressed: () {},
                       icon: const Icon(Icons.open_in_new, size: 18),
                       label: const Text('View Full Contract'),
-                      style: ElevatedButton.styleFrom(backgroundColor: _kPrimary, foregroundColor: Colors.white),
+                      style: ElevatedButton.styleFrom(backgroundColor: MerchantTheme.accentGreen, foregroundColor: const Color(0xFF003300)),
                     ),
                   ],
                 ),
@@ -501,7 +498,7 @@ class CommissionAgreementsScreen extends StatelessWidget {
               child: Text(
                 'By continuing to use the platform, you agree to the latest terms of service.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                style: TextStyle(color: MerchantTheme.tabInactive, fontSize: 12),
               ),
             ),
           ],
@@ -521,8 +518,8 @@ class _HeaderBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: const BoxDecoration(
-        color: _kBgLight,
-        border: Border(bottom: BorderSide(color: _kBorder)),
+        color: MerchantTheme.bgDark,
+        border: Border(bottom: BorderSide(color: MerchantTheme.dividerColor)),
       ),
       child: Row(
         children: [
@@ -530,7 +527,7 @@ class _HeaderBar extends StatelessWidget {
             IconButton(
               onPressed: () => GoRouter.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
-              color: const Color(0xFF0F172A),
+              color: MerchantTheme.textPrimary,
             )
           else
             const SizedBox(width: 48),
@@ -538,7 +535,7 @@ class _HeaderBar extends StatelessWidget {
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _kText),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: MerchantTheme.textPrimary),
             ),
           ),
           const SizedBox(width: 48),
@@ -558,7 +555,7 @@ class _ProfileHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 22),
-      color: Colors.white,
+      color: MerchantTheme.bgCard,
       child: Column(
         children: [
           Stack(
@@ -569,7 +566,7 @@ class _ProfileHero extends StatelessWidget {
                 margin: const EdgeInsets.only(right: 6, bottom: 6),
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: _kPrimary,
+                  color: MerchantTheme.accentGreen,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.white, width: 2),
                 ),
@@ -578,11 +575,11 @@ class _ProfileHero extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: _kText)),
+          Text(name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: MerchantTheme.textPrimary)),
           const SizedBox(height: 4),
-          const Text('Official Partner', style: TextStyle(color: _kPrimary, fontWeight: FontWeight.w700, fontSize: 12, letterSpacing: 0.8)),
+          const Text('Official Partner', style: TextStyle(color: MerchantTheme.accentGreen, fontWeight: FontWeight.w700, fontSize: 12, letterSpacing: 0.8)),
           const SizedBox(height: 4),
-          Text('Merchant ID: ${id.isEmpty ? '-' : '#$id'}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+          Text('Merchant ID: ${id.isEmpty ? '-' : '#$id'}', style: const TextStyle(color: MerchantTheme.tabInactive, fontSize: 12)),
         ],
       ),
     );
@@ -601,11 +598,11 @@ class _Avatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFFE2E8F0),
+        color: MerchantTheme.bgCardInner,
         image: imageUrl.isNotEmpty ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover) : null,
       ),
       child: imageUrl.isEmpty
-          ? const Icon(Icons.store, color: Color(0xFF94A3B8), size: 40)
+          ? const Icon(Icons.store, color: MerchantTheme.tabInactive, size: 40)
           : null,
     );
   }
@@ -622,7 +619,7 @@ class _SectionTitle extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: const TextStyle(
-          color: Color(0xFF94A3B8),
+          color: MerchantTheme.tabInactive,
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.2,
@@ -641,9 +638,9 @@ class _Card extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: MerchantTheme.bgCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kBorder),
+        border: Border.all(color: MerchantTheme.dividerColor),
       ),
       child: Column(
         children: children,
@@ -678,7 +675,7 @@ class _RowItem extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+          border: Border(bottom: BorderSide(color: MerchantTheme.dividerColor)),
         ),
         child: Row(
           children: [
@@ -686,20 +683,20 @@ class _RowItem extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: _kPrimary.withOpacity(0.12),
+                color: MerchantTheme.bgCardInner,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: _kPrimary),
+              child: Icon(icon, color: MerchantTheme.accentGreen),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: titleColor ?? _kText)),
+                  Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: titleColor ?? MerchantTheme.textPrimary)),
                   if (subtitle != null && subtitle!.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(subtitle!, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                    Text(subtitle!, style: const TextStyle(color: MerchantTheme.tabInactive, fontSize: 12)),
                   ],
                 ],
               ),
@@ -708,15 +705,15 @@ class _RowItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _kPrimary.withOpacity(0.1),
+                  color: MerchantTheme.dimGreen.withOpacity(0.4),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(actionLabel!, style: const TextStyle(color: _kPrimary, fontWeight: FontWeight.w700, fontSize: 12)),
+                child: Text(actionLabel!, style: const TextStyle(color: MerchantTheme.accentGreen, fontWeight: FontWeight.w700, fontSize: 12)),
               )
             else if (trailingText != null)
-              Text(trailingText!, style: const TextStyle(color: _kPrimary, fontWeight: FontWeight.w700, fontSize: 12))
+              Text(trailingText!, style: const TextStyle(color: MerchantTheme.accentGreen, fontWeight: FontWeight.w700, fontSize: 12))
             else
-              const Icon(Icons.chevron_right, color: Color(0xFF94A3B8)),
+              const Icon(Icons.chevron_right, color: MerchantTheme.tabInactive),
           ],
         ),
       ),
@@ -737,9 +734,110 @@ class _LogoutButton extends StatelessWidget {
         icon: const Icon(Icons.logout),
         label: const Text('Log Out'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFFEE2E2),
-          foregroundColor: const Color(0xFFDC2626),
+          backgroundColor: MerchantTheme.bgCardInner,
+          foregroundColor: Colors.redAccent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      ),
+    );
+  }
+}
+
+class HelpSupportScreen extends StatelessWidget {
+  const HelpSupportScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: MerchantTheme.bgDark,
+      body: SafeArea(
+        child: ListView(
+          children: [
+            _HeaderBar(title: 'Help & Support', showBack: true),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text('Need help?', style: TextStyle(color: MerchantTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w800)),
+                    SizedBox(height: 6),
+                    Text('Reach out to our partner support team for quick assistance.', style: TextStyle(color: MerchantTheme.tabInactive)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const _SectionTitle(title: 'Contact Us'),
+            _Card(
+              children: [
+                _RowItem(icon: Icons.call, title: 'Call Support', subtitle: '10:00 AM - 8:00 PM', onTap: () {}),
+                _RowItem(icon: Icons.chat, title: 'WhatsApp Support', subtitle: 'Quick replies', onTap: () {}),
+                _RowItem(icon: Icons.mail, title: 'Email Us', subtitle: 'support@maashardago.com', onTap: () {}),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const _SectionTitle(title: 'Help Topics'),
+            _Card(
+              children: [
+                _RowItem(icon: Icons.restaurant, title: 'Menu & Pricing', subtitle: 'Add, edit, or update items', onTap: () {}),
+                _RowItem(icon: Icons.receipt_long, title: 'Orders & Payments', subtitle: 'Payouts, invoices, and refunds', onTap: () {}),
+                _RowItem(icon: Icons.security, title: 'Account & Security', subtitle: 'Login and verification help', onTap: () {}),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AboutScreen extends StatelessWidget {
+  const AboutScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: MerchantTheme.bgDark,
+      body: SafeArea(
+        child: ListView(
+          children: [
+            _HeaderBar(title: 'About', showBack: true),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text('Maa Sharda Go Partner', style: TextStyle(color: MerchantTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w800)),
+                    SizedBox(height: 6),
+                    Text('Manage orders, menu, and store settings with ease.', style: TextStyle(color: MerchantTheme.tabInactive)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const _SectionTitle(title: 'App Info'),
+            _Card(
+              children: [
+                _RowItem(icon: Icons.tag, title: 'Version', trailingText: '1.0.0', onTap: () {}),
+                _RowItem(icon: Icons.description, title: 'Terms of Service', subtitle: 'Read the latest terms', onTap: () {}),
+                _RowItem(icon: Icons.privacy_tip, title: 'Privacy Policy', subtitle: 'How we handle data', onTap: () {}),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const _SectionTitle(title: 'Company'),
+            _Card(
+              children: [
+                _RowItem(icon: Icons.public, title: 'Website', subtitle: 'www.maashardago.com', onTap: () {}),
+                _RowItem(icon: Icons.location_on, title: 'Office', subtitle: 'Lucknow, India', onTap: () {}),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
     );

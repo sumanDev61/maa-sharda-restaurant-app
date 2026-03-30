@@ -142,6 +142,18 @@ GoRouter createRouter({required bool isLoggedIn, bool needsReview = false}) {
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: CommissionAgreementsScreen()),
           ),
+          GoRoute(
+            path: '/profile/help',
+            name: 'profile_help',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: HelpSupportScreen()),
+          ),
+          GoRoute(
+            path: '/profile/about',
+            name: 'profile_about',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AboutScreen()),
+          ),
         ],
       ),
     ],
