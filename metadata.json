@@ -1,0 +1,8 @@
+{
+  "name": "Maa Sharda Go - Merchant Portal",
+  "description": "Restaurant partner dashboard for order processing, menu management, store settings, and real-time merchant operations.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
