@@ -9,6 +9,7 @@ import { ProfileScreen } from './features/profile/ProfileScreen';
 import { NotificationsScreen } from './features/notifications/NotificationsScreen';
 import { LoginScreen } from './features/auth/LoginScreen';
 import { RegistrationFlow } from './features/auth/RegistrationFlow';
+import { ApplicationReviewScreen } from './features/auth/ApplicationReviewScreen';
 import { ApiClient } from './services/apiClient';
 
 export const App: React.FC = () => {
@@ -78,7 +79,21 @@ export const App: React.FC = () => {
     );
   }
 
-  // 3. If viewing notifications screen
+  // 3. If logged in but approvalStatus is pending or inReview (Waiting for Admin Approval)
+  if (session.approvalStatus === 'inReview' || session.approvalStatus === 'pending') {
+    return (
+      <ApplicationReviewScreen
+        restaurantName={session.restaurantName || 'Partner Restaurant'}
+        restaurantId={session.restaurantId || ''}
+        onStatusApproved={() => {
+          setSession(PartnerSession.load());
+        }}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  // 4. If viewing notifications screen
   if (viewingNotifications) {
     return (
       <NotificationsScreen
