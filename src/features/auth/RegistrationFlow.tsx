@@ -138,7 +138,7 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
     setSubmitting(true);
     setError(null);
     try {
-      await ApiClient.post('/v1/partner/auth/register', {
+      const res = await ApiClient.post<{ data: { restaurant_id: string; token?: string } }>('/v1/partner/auth/register', {
         phone: draft.phone,
         name: draft.restaurantName,
         address: draft.address,
@@ -153,13 +153,10 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
         documents_urls: docFiles,
       });
 
-      // Save session in review
-      PartnerSession.save({
-        token: 'reg-tok-' + Date.now(),
-        restaurantId: 'REST-DRAFT',
-        approvalStatus: 'inReview',
-        restaurantName: draft.restaurantName,
-      });
+      const rid = res?.data?.restaurant_id;
+      if (!rid) {
+        throw new Error('Server did not return a valid restaurant ID');
+      }
 
       setStep(4);
     } catch (err: any) {

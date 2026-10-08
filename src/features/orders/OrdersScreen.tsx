@@ -123,8 +123,8 @@ export const OrdersScreen: React.FC = () => {
         prep_time_minutes: selectedPrepTime,
       });
       await loadOrders();
-    } catch {
-      // error handled
+    } catch (err: any) {
+      alert(err?.message || 'Failed to accept order on server.');
     }
   };
 
@@ -135,8 +135,8 @@ export const OrdersScreen: React.FC = () => {
         action: 'reject',
       });
       await loadOrders();
-    } catch {
-      // error handled
+    } catch (err: any) {
+      alert(err?.message || 'Failed to reject order on server.');
     }
   };
 
@@ -152,8 +152,8 @@ export const OrdersScreen: React.FC = () => {
         });
       }
       await loadOrders();
-    } catch {
-      // error handled
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update order status on server.');
     }
   };
 

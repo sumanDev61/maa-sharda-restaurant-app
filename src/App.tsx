@@ -17,15 +17,9 @@ export const App: React.FC = () => {
   const [viewingNotifications, setViewingNotifications] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerPhone, setRegisterPhone] = useState('');
-  const [unreadNotifications, setUnreadNotifications] = useState(2);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
-    // If no existing session, seed a verified demo session so the application is instantly interactive
-    if (!PartnerSession.isLoggedIn) {
-      PartnerSession.setDemoSession('approved');
-      setSession(PartnerSession.load());
-    }
-
     const unsub = PartnerSession.subscribe((newSession) => {
       setSession(newSession);
     });
@@ -33,6 +27,7 @@ export const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (!session.token) return;
     const fetchUnread = async () => {
       try {
         const res = await ApiClient.get<{ data: { unread_count: number } }>('/v1/partner/notifications');
@@ -44,7 +39,7 @@ export const App: React.FC = () => {
       }
     };
     fetchUnread();
-  }, [viewingNotifications]);
+  }, [session.token, viewingNotifications]);
 
   const handleLogout = () => {
     PartnerSession.clear();
@@ -68,11 +63,11 @@ export const App: React.FC = () => {
     );
   }
 
-  // 2. If not logged in
+  // 2. If not logged in -> Show Login Screen
   if (!session.token) {
     return (
       <LoginScreen
-        onSuccess={(status) => {
+        onSuccess={() => {
           setSession(PartnerSession.load());
         }}
         onRegisterRequired={(phone) => {

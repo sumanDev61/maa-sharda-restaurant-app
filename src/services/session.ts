@@ -119,16 +119,6 @@ class SessionService {
       listener({ ...this.data });
     }
   }
-
-  // Preload a verified demo restaurant session for instant testing if needed
-  setDemoSession(status: 'approved' | 'inReview' = 'approved'): void {
-    this.save({
-      token: 'demo-partner-token-' + Date.now(),
-      restaurantId: 'REST-7890',
-      approvalStatus: status,
-      restaurantName: "Maa Sharda Grand Kitchen",
-    });
-  }
 }
 
 export const PartnerSession = new SessionService();

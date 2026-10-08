@@ -134,8 +134,8 @@ export const MenuScreen: React.FC = () => {
       });
       setEditingItem(null);
       await loadMenu();
-    } catch {
-      // error
+    } catch (err: any) {
+      alert(err?.message || 'Failed to save menu item on server.');
     }
   };
 
@@ -162,8 +162,8 @@ export const MenuScreen: React.FC = () => {
       setItems((prev) =>
         prev.map((it) => (it.id === item.id ? { ...it, status: nextStatus } : it))
       );
-    } catch {
-      // error
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update item availability on server.');
     }
   };
 
@@ -175,8 +175,8 @@ export const MenuScreen: React.FC = () => {
         deletes: [item.id],
       });
       setItems((prev) => prev.filter((it) => it.id !== item.id));
-    } catch {
-      // error
+    } catch (err: any) {
+      alert(err?.message || 'Failed to delete menu item on server.');
     }
   };
 
@@ -189,8 +189,8 @@ export const MenuScreen: React.FC = () => {
       if (res?.data?.url) {
         setFormImageUrl(res.data.url);
       }
-    } catch {
-      // error
+    } catch (err: any) {
+      alert(err?.message || 'Image upload failed on server.');
     } finally {
       setUploading(false);
     }
