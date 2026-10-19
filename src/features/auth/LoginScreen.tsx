@@ -38,18 +38,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     setError(null);
     try {
       const res = await ApiClient.post('/v1/partner/auth/login', { phone: cleanPhone });
-      const data = res?.data || {};
-      const rid = data.restaurant_id || `REST-${cleanPhone.slice(-4)}`;
+      const data = res?.data || res || {};
+      const rid = data.restaurant_id || data.id;
+      if (!rid) {
+        throw new Error('Mobile number not found in partner registry');
+      }
       setRestaurantId(rid);
       setStep('otp');
     } catch (err: any) {
-      if (err.statusCode === 404 || err.message?.toLowerCase().includes('not found')) {
-        onRegisterRequired(cleanPhone);
-        return;
+      const msg = err?.message || '';
+      if (err.statusCode === 404 || msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('404')) {
+        setError('Mobile number is not registered. Please verify number or click "Register as Partner" below.');
+      } else {
+        setError(msg || 'Failed to send OTP. Server offline or invalid response.');
       }
-      // Move to OTP screen
-      setRestaurantId(`REST-${cleanPhone.slice(-4)}`);
-      setStep('otp');
     } finally {
       setLoading(false);
     }
