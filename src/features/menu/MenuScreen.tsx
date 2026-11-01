@@ -53,10 +53,24 @@ export const MenuScreen: React.FC = () => {
   const loadMenu = async () => {
     setLoading(true);
     try {
-      const res = await ApiClient.get<{ data: { items: PartnerMenuItem[] } }>('/v1/partner/menu');
-      setItems(res?.data?.items || []);
-    } catch {
-      // fallback
+      const res = await ApiClient.get<{ data: { items: any[] } }>('/v1/partner/menu');
+      // Backend sends snake_case; map to the app's model.
+      setItems(
+        (res?.data?.items || []).map((m: any) => ({
+          id: String(m.id),
+          name: m.name || '',
+          category: m.category || undefined,
+          price: Number(m.price || 0),
+          prepTimeMinutes: Number(m.prep_time_minutes || 15),
+          isVeg: Boolean(m.is_veg),
+          isBestseller: Boolean(m.is_bestseller),
+          status: m.status || 'Available',
+          description: m.description || '',
+          imageUrl: m.image_url || '',
+        }))
+      );
+    } catch (err: any) {
+      alert(err?.message || 'Could not load menu');
     } finally {
       setLoading(false);
     }
@@ -115,7 +129,7 @@ export const MenuScreen: React.FC = () => {
     };
 
     try {
-      await ApiClient.put('/v1/partner/menu', {
+      const saveRes = await ApiClient.put<{ data?: { errors?: string[] } }>('/v1/partner/menu', {
         upserts: [
           {
             ...(payloadItem.id ? { id: payloadItem.id } : {}),
@@ -132,6 +146,10 @@ export const MenuScreen: React.FC = () => {
         ],
         deletes: [],
       });
+      if (saveRes?.data?.errors?.length) {
+        alert(saveRes.data.errors.join(', '));
+        return;
+      }
       setEditingItem(null);
       await loadMenu();
     } catch (err: any) {

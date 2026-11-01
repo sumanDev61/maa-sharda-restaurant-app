@@ -10,6 +10,11 @@ export class ApiException extends Error {
   }
 }
 
+/** Token expired / revoked: drop the session so the app returns to the login screen. */
+const handleUnauthorized = (status: number) => {
+  if (status === 401 && PartnerSession.token) PartnerSession.clear();
+};
+
 class ApiClientService {
   private get baseUrl(): string {
     return Env.apiBaseUrl;
@@ -34,6 +39,7 @@ class ApiClientService {
     if (res.ok) {
       return (await res.json()) as T;
     }
+    handleUnauthorized(res.status);
     const errBody = await res.json().catch(() => null);
     throw new ApiException(res.status, errBody?.message || errBody?.error || `HTTP ${res.status}`);
   }
@@ -61,6 +67,7 @@ class ApiClientService {
       const text = await res.text();
       return (text ? JSON.parse(text) : {}) as T;
     }
+    handleUnauthorized(res.status);
     const errBody = await res.json().catch(() => null);
     throw new ApiException(res.status, errBody?.message || errBody?.error || `HTTP ${res.status}`);
   }

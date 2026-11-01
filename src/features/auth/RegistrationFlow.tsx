@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   ArrowLeft,
   Store,
@@ -53,9 +53,9 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
     ownerPhone: initialPhone,
     email: '',
     cuisine: CUISINE_OPTIONS[0],
-    address: 'Fetching current location...',
-    latitude: 23.2599,
-    longitude: 77.4126,
+    address: '',
+    latitude: null,
+    longitude: null,
     fssaiNumber: '',
     gstNumber: '',
     panNumber: '',
@@ -68,6 +68,12 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
 
   // Real location state
   const [isLocating, setIsLocating] = useState(false);
+  // OTP step after the application is submitted
+  const [pendingRestaurantId, setPendingRestaurantId] = useState<string | null>(null);
+  const [otp, setOtp] = useState('');
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadKeyRef = useRef<string | null>(null);
 
   // Documents state
   const [docFiles, setDocFiles] = useState<Record<string, string>>({
@@ -91,9 +97,9 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
             if (res.ok) {
               const data = await res.json();
               const sub = data?.address?.suburb || data?.address?.neighbourhood || data?.address?.road || '';
-              const city = data?.address?.city || data?.address?.town || data?.address?.county || 'Bhopal';
-              const state = data?.address?.state || 'MP';
-              const formatted = sub ? `${sub}, ${city}, ${state}` : `${city}, ${state}`;
+              const city = data?.address?.city || data?.address?.town || data?.address?.county || '';
+              const state = data?.address?.state || '';
+              const formatted = [sub, city, state].filter(Boolean).join(', ');
               setDraft((prev) => ({
                 ...prev,
                 address: formatted,
@@ -101,35 +107,23 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
                 longitude,
               }));
             } else {
-              setDraft((prev) => ({
-                ...prev,
-                address: 'Current Area, Bhopal, MP',
-                latitude,
-                longitude,
-              }));
+              setDraft((prev) => ({ ...prev, latitude, longitude }));
             }
           } catch {
-            setDraft((prev) => ({
-              ...prev,
-              address: 'Current Area, Bhopal, MP',
-              latitude,
-              longitude,
-            }));
+            // Coordinates are saved even if the address lookup fails; the owner types the address.
+            setDraft((prev) => ({ ...prev, latitude, longitude }));
           } finally {
             setIsLocating(false);
           }
         },
         () => {
           setIsLocating(false);
-          setDraft((prev) => ({
-            ...prev,
-            address: 'Current Area, Bhopal, MP',
-          }));
+          setError('Could not get your location. Please allow location access or type the address.');
         },
-        { timeout: 8000 }
+        { timeout: 10000, enableHighAccuracy: true }
       );
     } else {
-      setDraft((prev) => ({ ...prev, address: 'Current Area, Bhopal, MP' }));
+      setError('Location is not available on this device. Please type the address.');
     }
   };
 
@@ -149,22 +143,50 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
       setError('Store address and FSSAI number are required');
       return;
     }
+    if (!/^\d{14}$/.test(draft.fssaiNumber.trim())) {
+      setError('FSSAI license number must be 14 digits');
+      return;
+    }
+    if (draft.latitude == null || draft.longitude == null) {
+      setError('Please tap "Fetch Current Location" at your store so riders can find you');
+      return;
+    }
     setError(null);
     setStep(3);
   };
 
-  // Mock document upload
+  // Real document upload (image or PDF) to the backend / Cloudinary
   const handleUploadDoc = (key: string) => {
-    setDocFiles((prev) => ({
-      ...prev,
-      [key]: `https://images.unsplash.com/photo-1568667256549-094345857637?w=400`,
-    }));
+    uploadKeyRef.current = key;
+    fileInputRef.current?.click();
+  };
+
+  const onDocFileChosen = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const key = uploadKeyRef.current;
+    e.target.value = '';
+    if (!file || !key) return;
+    setUploadingKey(key);
+    setError(null);
+    try {
+      const res = await ApiClient.uploadRegistrationImage(file);
+      if (!res?.data?.url) throw new Error('Upload failed');
+      setDocFiles((prev) => ({ ...prev, [key]: res.data.url }));
+    } catch (err: any) {
+      setError(err?.message || 'Document upload failed. Please try again.');
+    } finally {
+      setUploadingKey(null);
+    }
   };
 
   // Step 3: Submit application
   const handleSubmitApplication = async () => {
-    if (!draft.panNumber.trim()) {
-      setError('PAN card number is required');
+    if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(draft.panNumber.trim().toUpperCase())) {
+      setError('Please enter a valid PAN (e.g. ABCDE1234F)');
+      return;
+    }
+    if (!docFiles.fssai || !docFiles.pan) {
+      setError('Please upload your FSSAI certificate and PAN card');
       return;
     }
     setSubmitting(true);
@@ -178,34 +200,47 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
         owner_email: draft.email,
         cuisines: [draft.cuisine],
         documents: {
-          fssai: draft.fssaiNumber,
-          pan: draft.panNumber,
-          ...(draft.gstNumber ? { gst: draft.gstNumber } : {}),
+          fssai: draft.fssaiNumber.trim(),
+          pan: draft.panNumber.trim().toUpperCase(),
+          ...(draft.gstNumber ? { gst: draft.gstNumber.trim().toUpperCase() } : {}),
         },
-        documents_urls: docFiles,
+        documents_urls: Object.fromEntries(Object.entries(docFiles).filter(([, v]) => Boolean(v))),
+        lat: draft.latitude,
+        lng: draft.longitude,
       });
+      const rid = res?.data?.restaurant_id;
+      if (!rid) throw new Error('Registration failed. Please try again.');
+      // The server sends an OTP to the registered phone; the session is created only after it is verified.
+      setPendingRestaurantId(rid);
+    } catch (err: any) {
+      setError(err?.message || 'Could not submit application. Please check your internet and try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-      const rid = res?.data?.restaurant_id || `REST-${draft.phone.slice(-4)}`;
-      const token = res?.data?.token || `token_${Date.now()}`;
-
+  const handleVerifyRegistrationOtp = async () => {
+    if (!pendingRestaurantId || otp.trim().length < 4) {
+      setError('Enter the OTP sent to your phone');
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await ApiClient.post<{ data: { token: string; restaurant: { id: string; name: string; approval_status: string } } }>(
+        '/v1/partner/auth/verify-otp',
+        { restaurant_id: pendingRestaurantId, otp: otp.trim() }
+      );
+      if (!res?.data?.token) throw new Error('Verification failed');
       PartnerSession.save({
-        token,
-        restaurantId: rid,
-        approvalStatus: 'inReview',
-        restaurantName: draft.restaurantName,
+        token: res.data.token,
+        restaurantId: res.data.restaurant.id,
+        approvalStatus: res.data.restaurant.approval_status || 'inReview',
+        restaurantName: res.data.restaurant.name || draft.restaurantName,
       });
-
       setStep(4);
     } catch (err: any) {
-      // Offline fallback
-      const fallbackRid = `REST-${draft.phone.slice(-4)}`;
-      PartnerSession.save({
-        token: `token_${Date.now()}`,
-        restaurantId: fallbackRid,
-        approvalStatus: 'inReview',
-        restaurantName: draft.restaurantName || 'Maa Sharda Partner Kitchen',
-      });
-      setStep(4);
+      setError(err?.message || 'Invalid OTP');
     } finally {
       setSubmitting(false);
     }
@@ -386,15 +421,6 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
                   />
                 </div>
               </div>
-                        }}
-                        className="w-full p-2.5 text-left text-xs text-[#81C784] hover:bg-[#1B5E20]/40 transition-colors"
-                      >
-                        {r.display_name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
 
               <div>
                 <label className="block text-xs font-bold text-[#81C784] mb-1">
@@ -414,7 +440,9 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
                 <div className="relative text-center z-10">
                   <MapPin className="w-6 h-6 text-[#00FF41] mx-auto animate-bounce" />
                   <span className="text-[11px] font-bold text-white mt-1 block">
-                    Lat: {draft.latitude?.toFixed(4)}, Lon: {draft.longitude?.toFixed(4)}
+                    {draft.latitude != null && draft.longitude != null
+                      ? `Lat: ${draft.latitude.toFixed(4)}, Lon: ${draft.longitude.toFixed(4)}`
+                      : 'Location not captured yet'}
                   </span>
                 </div>
               </div>
@@ -519,23 +547,55 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
                       }`}
                     >
                       <Upload className="w-3.5 h-3.5" />
-                      {uploaded ? 'Re-upload' : 'Upload'}
+                      {uploadingKey === doc.key ? 'Uploading…' : uploaded ? 'Re-upload' : 'Upload'}
                     </button>
                   </div>
                 );
               })}
             </div>
 
-            <div className="pt-4">
-              <button
-                type="button"
-                onClick={handleSubmitApplication}
-                disabled={submitting}
-                className="w-full py-3.5 px-4 rounded-xl bg-[#00FF41] text-[#003300] font-extrabold text-sm tracking-wide hover:bg-[#00e63a] transition-all cursor-pointer shadow-md"
-              >
-                {submitting ? 'Submitting Application...' : 'Submit Application'}
-              </button>
-            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              className="hidden"
+              onChange={onDocFileChosen}
+            />
+
+            {pendingRestaurantId ? (
+              <div className="pt-4 space-y-3">
+                <label className="block text-xs font-bold text-[#81C784]">
+                  Enter the OTP sent to +91 {draft.phone.slice(-10)}
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  className="w-full bg-[#0F3318] border border-[#1B3D22] rounded-xl px-3 py-2.5 text-lg tracking-[0.4em] font-mono text-white focus:outline-none focus:border-[#00FF41]"
+                />
+                <button
+                  type="button"
+                  onClick={handleVerifyRegistrationOtp}
+                  disabled={submitting}
+                  className="w-full py-3.5 px-4 rounded-xl bg-[#00FF41] text-[#003300] font-extrabold text-sm tracking-wide hover:bg-[#00e63a] transition-all cursor-pointer shadow-md"
+                >
+                  {submitting ? 'Verifying…' : 'Verify & Finish'}
+                </button>
+              </div>
+            ) : (
+              <div className="pt-4">
+                <button
+                  type="button"
+                  onClick={handleSubmitApplication}
+                  disabled={submitting || Boolean(uploadingKey)}
+                  className="w-full py-3.5 px-4 rounded-xl bg-[#00FF41] text-[#003300] font-extrabold text-sm tracking-wide hover:bg-[#00e63a] transition-all cursor-pointer shadow-md"
+                >
+                  {submitting ? 'Submitting Application...' : 'Submit Application'}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

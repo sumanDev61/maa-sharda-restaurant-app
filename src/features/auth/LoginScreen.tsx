@@ -71,11 +71,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         otp: otp.trim(),
       });
       const data = res?.data || {};
-      const token = data.token || `token_${Date.now()}`;
+      const token = data.token;
       const rest = data.restaurant || {};
-      const rid = rest.id || restaurantId;
-      const name = rest.name || 'Maa Sharda Partner';
-      const approval = rest.approval_status || 'approved';
+      if (!token || !rest.id) throw new Error('Verification failed. Please try again.');
+      const rid = rest.id;
+      const name = rest.name || '';
+      const approval = rest.approval_status || 'inReview';
 
       PartnerSession.save({
         token,
@@ -86,18 +87,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
       onSuccess(approval);
     } catch (err: any) {
-      // Fallback for test codes
-      if (otp.trim() === '123456' || otp.trim() === '000000' || otp.trim().length >= 4) {
-        const savedApproval = localStorage.getItem('partner_approval_status') || 'approved';
-        PartnerSession.save({
-          token: `token_${Date.now()}`,
-          restaurantId: restaurantId || `REST-${phone.slice(-4)}`,
-          approvalStatus: savedApproval,
-          restaurantName: 'Maa Sharda Partner',
-        });
-        onSuccess(savedApproval);
-        return;
-      }
+      // No client-side fallback: a session is only created from a token issued by the server.
       setError(err?.message || 'OTP Verification failed. Please check code and try again.');
     } finally {
       setLoading(false);
@@ -309,7 +299,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. REST-7890 or testrestaurant"
+                  placeholder="Your Restaurant ID"
                   value={loginId}
                   onChange={(e) => setLoginId(e.target.value)}
                   required

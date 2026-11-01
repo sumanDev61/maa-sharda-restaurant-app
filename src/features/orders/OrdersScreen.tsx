@@ -5,6 +5,7 @@ import { OrderCard } from '../../components/OrderCard';
 import { ApiClient } from '../../services/apiClient';
 import { PartnerSession } from '../../services/session';
 import { Env } from '../../config/env';
+import { mapMerchantOrder } from '../../services/orderMapper';
 
 export const OrdersScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'incoming' | 'preparing' | 'ready' | 'outForDelivery'>('incoming');
@@ -63,9 +64,8 @@ export const OrdersScreen: React.FC = () => {
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const rid = PartnerSession.restaurantId || '';
-      const res = await ApiClient.get<{ data: MerchantOrder[] }>(`/v1/partner/orders?restaurant_id=${rid}`);
-      const list = res?.data || [];
+      const res = await ApiClient.get<{ data: any[] }>('/v1/partner/orders?scope=active');
+      const list = (res?.data || []).map(mapMerchantOrder);
       setOrders(list);
 
       const incoming = list.filter((o) => o.status === 'incoming');
@@ -83,7 +83,7 @@ export const OrdersScreen: React.FC = () => {
 
   useEffect(() => {
     loadOrders();
-    const interval = setInterval(loadOrders, 8000);
+    const interval = setInterval(loadOrders, 20000); // fallback; SSE below pushes changes instantly
     return () => {
       clearInterval(interval);
       stopRinging();
@@ -92,14 +92,16 @@ export const OrdersScreen: React.FC = () => {
 
   // Connect to SSE stream if available
   useEffect(() => {
-    const rid = PartnerSession.restaurantId || '';
-    if (!rid) return;
+    const token = PartnerSession.token || '';
+    if (!token) return;
     let es: EventSource | null = null;
     try {
-      es = new EventSource(`${Env.apiBaseUrl}/v1/sse/partner?restaurant_id=${rid}`);
-      es.onmessage = () => {
+      // EventSource can't send headers, so the partner token goes in the query string.
+      es = new EventSource(`${Env.apiBaseUrl}/v1/sse/partner?token=${encodeURIComponent(token)}`);
+      // The server sends named "order" events (onmessage only receives unnamed ones).
+      es.addEventListener('order', () => {
         loadOrders();
-      };
+      });
     } catch {
       // SSE not supported or offline
     }

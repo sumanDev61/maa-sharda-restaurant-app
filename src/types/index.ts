@@ -12,6 +12,7 @@ export interface OrderItem {
   name: string;
   quantity: number;
   price: number;
+  lineTotal?: number;
 }
 
 export interface MerchantOrder {
@@ -27,6 +28,11 @@ export interface MerchantOrder {
   driverPhone?: string;
   driverStatus?: string;
   refundStatus?: string;
+  itemTotal?: number;
+  restaurantPayout?: number;
+  instructions?: string;
+  paymentMethod?: string;
+  createdAt?: string;
 }
 
 export interface PartnerMenuItem {
@@ -84,6 +90,10 @@ export interface PartnerProfile {
   delivery_minutes: number;
   is_pure_veg: boolean;
   approval_status: 'approved' | 'inReview' | 'rejected' | string;
+  commission_rate?: number;
+  bank?: { account_name: string; account_number_masked: string; ifsc: string; upi: string };
+  support_phone?: string;
+  support_email?: string;
 }
 
 export interface NotificationItem {

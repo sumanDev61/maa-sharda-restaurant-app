@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
 import { MerchantOrder } from '../../types';
+import { mapMerchantOrder } from '../../services/orderMapper';
 import { ApiClient } from '../../services/apiClient';
 import { PartnerSession } from '../../services/session';
 
@@ -11,9 +12,8 @@ export const HistoryScreen: React.FC = () => {
   const loadHistory = async () => {
     setLoading(true);
     try {
-      const rid = PartnerSession.restaurantId || '';
-      const res = await ApiClient.get<{ data: MerchantOrder[] }>(`/v1/partner/orders?restaurant_id=${rid}`);
-      const list = res?.data || [];
+      const res = await ApiClient.get<{ data: any[] }>('/v1/partner/orders?scope=history&limit=200');
+      const list = (res?.data || []).map(mapMerchantOrder);
       setOrders(list.filter((o) => o.status === 'delivered' || o.status === 'cancelled'));
     } catch {
       // fallback handled
@@ -51,7 +51,7 @@ export const HistoryScreen: React.FC = () => {
         <div className="space-y-3.5">
           {orders.map((order) => {
             const isDelivered = order.status === 'delivered';
-            const total = order.items.reduce((acc, it) => acc + it.price, 0);
+            const total = order.itemTotal || order.items.reduce((acc, it) => acc + (it.lineTotal ?? it.price * it.quantity), 0);
 
             return (
               <div

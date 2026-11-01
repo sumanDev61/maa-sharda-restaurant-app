@@ -26,7 +26,7 @@ export const ApplicationReviewScreen: React.FC<ApplicationReviewScreenProps> = (
       const res = await ApiClient.get<{ data?: { approval_status?: string; status?: string } }>('/v1/partner/profile');
       const status = res?.data?.approval_status || res?.data?.status;
 
-      if (status === 'approved' || status === 'active') {
+      if (res?.data?.approval_status === 'approved') {
         PartnerSession.save({
           token: PartnerSession.token!,
           restaurantId: PartnerSession.restaurantId!,
@@ -37,21 +37,11 @@ export const ApplicationReviewScreen: React.FC<ApplicationReviewScreenProps> = (
       } else {
         setMessage('Application is still under review by Maa Sharda partner verification team.');
       }
-    } catch {
-      setMessage('Verified current status: Pending approval from dispatch team.');
+    } catch (err: any) {
+      setMessage(err?.message || 'Could not check status right now. Please try again.');
     } finally {
       setChecking(false);
     }
-  };
-
-  const handleInstantApprove = () => {
-    PartnerSession.save({
-      token: PartnerSession.token || `token_${Date.now()}`,
-      restaurantId: PartnerSession.restaurantId || restaurantId || 'REST-PREVIEW',
-      approvalStatus: 'approved',
-      restaurantName,
-    });
-    onStatusApproved();
   };
 
   return (
@@ -145,16 +135,6 @@ export const ApplicationReviewScreen: React.FC<ApplicationReviewScreenProps> = (
         >
           <RefreshCw className={`w-4 h-4 ${checking ? 'animate-spin' : ''}`} />
           {checking ? 'Checking Status...' : 'Refresh Approval Status'}
-        </button>
-
-        {/* Demo Fast-track button */}
-        <button
-          type="button"
-          onClick={handleInstantApprove}
-          className="w-full py-2.5 rounded-xl bg-[#0F3318] hover:bg-[#1B5E20] border border-[#1B3D22] text-[#00FF41] font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Approve & Enter Kitchen Dashboard (Preview)</span>
         </button>
 
         <button

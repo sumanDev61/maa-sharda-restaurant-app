@@ -39,9 +39,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
 
   // Bank details state
-  const [bankAccount, setBankAccount] = useState('HDFC Bank •••• 4892');
-  const [ifscCode, setIfscCode] = useState('HDFC0001234');
-  const [payoutSchedule, setPayoutSchedule] = useState('Daily Automated Settlement');
+  // Bank / payout details come from the server (no placeholder account numbers)
+  const bankAccount = profile?.bank?.account_number_masked
+    ? `${profile.bank.account_name || 'Account'} ${profile.bank.account_number_masked}`
+    : profile?.bank?.upi || 'Not added yet — contact support to add your payout account';
+  const ifscCode = profile?.bank?.ifsc || '—';
+  const payoutSchedule = 'As per your partner agreement';
+  const commissionRate = profile?.commission_rate;
+  const supportDigits = String(profile?.support_phone || '').replace(/D/g, '');
+  const supportPhone = supportDigits ? (supportDigits.length === 10 ? `91${supportDigits}` : supportDigits) : '';
 
   const loadProfile = async () => {
     setLoading(true);
@@ -142,10 +148,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             CURRENT TIER
           </span>
           <h3 className="text-2xl font-extrabold text-white mt-1 mb-1">
-            10% Commission
+            {commissionRate != null ? `${commissionRate}% Commission` : 'Commission not set'}
           </h3>
           <p className="text-xs text-[#81C784]">
-            Your commission rate is based on the Premium Restaurant Partner tier. Settlements are automatically cleared every 24 hours.
+            Commission is charged on the item total of each delivered order. Contact support for settlement details.
           </p>
         </div>
 
@@ -200,21 +206,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
           <div className="space-y-2.5">
             <a
-              href="tel:+918000123456"
+              href={supportPhone ? `tel:+${supportPhone}` : undefined}
               className="flex items-center justify-between p-3 rounded-xl bg-[#0F3318] border border-[#1B3D22] hover:bg-[#1B5E20]/40 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-[#00FF41]" />
                 <div>
                   <h5 className="text-xs font-bold text-white">Call Partner Support</h5>
-                  <p className="text-[11px] text-[#81C784]">Toll-Free: 1800-123-4567</p>
+                  <p className="text-[11px] text-[#81C784]">{supportPhone ? `+${supportPhone}` : 'Support number not configured'}</p>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-[#9E9E9E]" />
             </a>
 
             <a
-              href="https://wa.me/918000123456"
+              href={supportPhone ? `https://wa.me/${supportPhone}` : undefined}
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-between p-3 rounded-xl bg-[#0F3318] border border-[#1B3D22] hover:bg-[#1B5E20]/40 transition-colors"
@@ -349,7 +355,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </div>
 
         <p className="text-xs text-[#81C784] mt-2">
-          Partner ID: <span className="font-mono font-bold text-white">#{profile?.id || 'REST-7890'}</span>
+          Partner ID: <span className="font-mono font-bold text-white">#{profile?.id || '—'}</span>
         </p>
       </div>
 
