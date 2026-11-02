@@ -224,7 +224,7 @@ export const MenuScreen: React.FC = () => {
   return (
     <div>
       {/* Top Header */}
-      <div className="sticky top-[53px] z-30 bg-[#0A1A0F] border-b border-[#1B3D22] px-4 py-3">
+      <div className="sticky top-[61px] z-30 bg-[#0A1A0F] border-b border-[#1B3D22] px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-lg font-extrabold text-white">Menu Catalog</h2>

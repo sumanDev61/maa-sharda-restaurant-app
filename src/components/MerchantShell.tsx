@@ -74,7 +74,7 @@ export const MerchantShell: React.FC<MerchantShellProps> = ({
       </header>
 
       {/* Main Screen Content */}
-      <main className="flex-1 max-w-2xl w-full mx-auto pb-24 overflow-y-auto">
+      <main className="flex-1 max-w-2xl w-full mx-auto pb-24">
         {children}
       </main>
 

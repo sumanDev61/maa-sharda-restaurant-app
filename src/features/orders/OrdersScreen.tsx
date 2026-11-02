@@ -179,7 +179,7 @@ export const OrdersScreen: React.FC = () => {
   return (
     <div>
       {/* Tab Bar */}
-      <div className="sticky top-[53px] z-30 bg-[#0A1A0F] border-b border-[#1B3D22]">
+      <div className="sticky top-[61px] z-30 bg-[#0A1A0F] border-b border-[#1B3D22]">
         <div className="flex items-center justify-between border-b border-[#1B3D22]/60 px-4 py-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-[#81C784]">Active Kitchen Feed</span>

@@ -228,7 +228,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 <div className="pt-2 text-center">
                   <button
                     type="button"
-                    onClick={() => onRegisterRequired(phone || '+91 98765 43210')}
+                    onClick={() => onRegisterRequired(phone)}
                     className="text-xs text-[#81C784] hover:text-[#00FF41] underline cursor-pointer"
                   >
                     New restaurant? Register as Partner

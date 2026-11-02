@@ -133,6 +133,17 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
       setError('Please fill in all required fields');
       return;
     }
+    // The contact number is the login number: OTPs are sent to it.
+    const digits = String(draft.ownerPhone || '').replace(/\D/g, '').slice(-10);
+    if (!/^[6-9]\d{9}$/.test(digits)) {
+      setError('Please enter a valid 10-digit mobile number');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email.trim())) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    setDraft((d) => ({ ...d, phone: digits, ownerPhone: digits }));
     setError(null);
     setStep(2);
   };
@@ -656,7 +667,7 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({
                 onClick={onCompleted}
                 className="w-full py-3.5 px-4 rounded-xl bg-[#00FF41] text-[#003300] font-extrabold text-sm tracking-wide hover:bg-[#00e63a] transition-all cursor-pointer shadow-md"
               >
-                Go to Partner Dashboard (Approved Preview)
+                Check Application Status
               </button>
             </div>
           </div>

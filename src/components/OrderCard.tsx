@@ -80,7 +80,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
       </div>
 
       {/* Order ID */}
-      <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
+      <h2 className="text-lg sm:text-xl font-extrabold text-white mb-3 break-all leading-tight">
         #{order.orderId}
       </h2>
 
@@ -139,7 +139,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
               {item.quantity}x {item.name}
             </span>
             <span className="text-white font-semibold">
-              ₹{item.price.toFixed(0)}
+              ₹{Number(item.lineTotal ?? item.price * item.quantity).toFixed(0)}
             </span>
           </div>
         ))}
